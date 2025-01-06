@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "521022903787",
+    "project_id": "rvcevm",
+    "storage_bucket": "rvcevm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:521022903787:android:67350c1c4b263cc74975ae",
+        "android_client_info": {
+          "package_name": "com.rvce.rvcevm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxrgH84_XBs2J9WRN2CObp5KnhU_nhycU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
