@@ -159,7 +159,7 @@ class _ReturnVisitorDetailsScreenState
                 ),
                 dropdownColor: Colors.white,
                 decoration: InputDecoration(
-                  labelText: 'Department *',
+                  labelText: 'Department ****',
                   labelStyle: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[700],

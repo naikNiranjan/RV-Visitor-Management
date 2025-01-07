@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/route_utils.dart';
 import '../../domain/models/visitor.dart';
+import '../../domain/models/department_data.dart';
 import '../providers/visitor_form_provider.dart';
 import '../widgets/visitor_additional_details_form.dart';
 import '../../../../core/widgets/base_screen.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 class VisitorRegistrationForm extends ConsumerStatefulWidget {
   final void Function(Visitor visitor)? onSubmitted;
@@ -27,22 +29,17 @@ class _VisitorRegistrationFormState
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _contactController = TextEditingController();
-  final _vehicleController = TextEditingController();
   final _purposeController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _emergencyNameController = TextEditingController();
-  final _emergencyContactController = TextEditingController();
+  String? _selectedDepartmentCode;
+  String? _selectedStaffId;
+  String? _selectedDocumentType;
 
   @override
   void dispose() {
     _nameController.dispose();
     _addressController.dispose();
     _contactController.dispose();
-    _vehicleController.dispose();
     _purposeController.dispose();
-    _emailController.dispose();
-    _emergencyNameController.dispose();
-    _emergencyContactController.dispose();
     super.dispose();
   }
 
@@ -80,57 +77,20 @@ class _VisitorRegistrationFormState
     return null;
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter email address';
-    }
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-      caseSensitive: false,
-    );
-    if (!emailRegex.hasMatch(value)) {
-      return 'Please enter a valid email address';
-    }
-    if (value.length > 254) {
-      return 'Email address is too long';
-    }
-    if (value.contains('..')) {
-      return 'Invalid email format';
-    }
-    return null;
-  }
-
-  String? _validateEmergencyContact(String? value) {
-    if (value == null || value.isEmpty) {
-      return null; // Optional field
-    }
-    if (value.length != 10) {
-      return 'Contact number must be 10 digits';
-    }
-    return null;
-  }
-
   void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
       final visitor = Visitor(
         name: _nameController.text,
         address: _addressController.text,
         contactNumber: _contactController.text,
-        email: _emailController.text,
-        vehicleNumber:
-            _vehicleController.text.isEmpty ? null : _vehicleController.text,
+        email: '',
+        vehicleNumber: null,
         purposeOfVisit: _purposeController.text,
         numberOfVisitors: 1,
-        whomToMeet: '',
-        department: '',
-        documentType: '',
+        whomToMeet: _selectedStaffId ?? '',
+        department: _selectedDepartmentCode ?? '',
+        documentType: _selectedDocumentType ?? '',
         entryTime: DateTime.now(),
-        emergencyContactName: _emergencyNameController.text.isEmpty
-            ? null
-            : _emergencyNameController.text,
-        emergencyContactNumber: _emergencyContactController.text.isEmpty
-            ? null
-            : _emergencyContactController.text,
       );
 
       Navigator.push(
@@ -158,169 +118,300 @@ class _VisitorRegistrationFormState
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Visitor Registration',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Please fill in the visitor details',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildInputField(
-              controller: _nameController,
-              label: 'Full Name',
-              prefixIcon: Icons.person_outline,
-              validator: _validateName,
-            ),
-            const SizedBox(height: 16),
-            _buildInputField(
-              controller: _addressController,
-              label: 'Address',
-              prefixIcon: Icons.location_on_outlined,
-              validator: _validateAddress,
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            _buildInputField(
-              controller: _contactController,
-              label: 'Contact Number',
-              prefixIcon: Icons.phone_outlined,
-              validator: _validateContact,
-              keyboardType: TextInputType.phone,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(10),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildInputField(
-              controller: _emailController,
-              label: 'Email Address',
-              prefixIcon: Icons.email_outlined,
-              validator: _validateEmail,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              hintText: 'example@email.com',
-              onChanged: (value) {
-                setState(() {});
-              },
-              decoration: InputDecoration(
-                labelText: 'Email Address',
-                hintText: 'example@email.com',
-                prefixIcon: Icon(
-                  Icons.email_outlined,
-                  color: AppTheme.primaryColor,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: AppTheme.cardBackgroundColor,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                helperText: 'Enter your valid email address',
-                helperStyle: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-                suffixIcon: _emailController.text.isNotEmpty
-                    ? Icon(
-                        _validateEmail(_emailController.text) == null
-                            ? Icons.check_circle
-                            : Icons.error,
-                        color: _validateEmail(_emailController.text) == null
-                            ? Colors.green
-                            : Colors.red,
-                      )
-                    : null,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildInputField(
-              controller: _vehicleController,
-              label: 'Vehicle Number (Optional)',
-              prefixIcon: Icons.directions_car_outlined,
-              validator: null,
-            ),
-            const SizedBox(height: 16),
-            _buildInputField(
-              controller: _purposeController,
-              label: 'Purpose of Visit',
-              prefixIcon: Icons.assignment_outlined,
-              validator: _validatePurpose,
-              maxLines: 2,
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Emergency Contact (Optional)',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildInputField(
-              controller: _emergencyNameController,
-              label: 'Emergency Contact Name',
-              prefixIcon: Icons.person_outline,
-              hintText: 'Enter emergency contact name',
-            ),
-            const SizedBox(height: 16),
-            _buildInputField(
-              controller: _emergencyContactController,
-              label: 'Emergency Contact Number',
-              prefixIcon: Icons.phone_outlined,
-              validator: _validateEmergencyContact,
-              keyboardType: TextInputType.phone,
-              hintText: 'Enter emergency contact number',
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(10),
-              ],
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton(
-                onPressed: _submitForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Next',
+    final screenWidth = MediaQuery.of(context).size.width;
+    final padding = ResponsiveUtils.getHorizontalPadding(screenWidth);
+
+    return SingleChildScrollView(
+      child: Form(
+        key: _formKey,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: padding, vertical: 16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Visitor Registration',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  'Please fill in the visitor details',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildInputField(
+                  controller: _nameController,
+                  label: 'Full Name',
+                  prefixIcon: Icons.person_outline,
+                  validator: _validateName,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _addressController,
+                  label: 'Address',
+                  prefixIcon: Icons.location_on_outlined,
+                  validator: _validateAddress,
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _contactController,
+                  label: 'Contact Number',
+                  prefixIcon: Icons.phone_outlined,
+                  validator: _validateContact,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _purposeController,
+                  label: 'Purpose of Visit',
+                  prefixIcon: Icons.assignment_outlined,
+                  validator: _validatePurpose,
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedDepartmentCode,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Department *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.business_outlined,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  menuMaxHeight: 300,
+                  items: departments.map((department) {
+                    return DropdownMenuItem(
+                      value: department.value,
+                      child: Text(
+                        department.label,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDepartmentCode = value;
+                      _selectedStaffId = null;
+                    });
+                  },
+                  validator: (value) =>
+                      value == null ? 'Please select a department' : null,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedStaffId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Whom to Meet *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.person_outline,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  menuMaxHeight: 300,
+                  items: allStaff.map((staff) {
+                    return DropdownMenuItem(
+                      value: staff.value,
+                      child: Text(
+                        staff.label,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) =>
+                      setState(() => _selectedStaffId = value),
+                  validator: (value) =>
+                      value == null ? 'Please select whom to meet' : null,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedDocumentType,
+                  decoration: const InputDecoration(
+                    labelText: 'Document Type *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.document_scanner,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  items: documentTypes.map((type) {
+                    return DropdownMenuItem(
+                      value: type.value,
+                      child: Text(type.label),
+                    );
+                  }).toList(),
+                  onChanged: (value) =>
+                      setState(() => _selectedDocumentType = value),
+                  validator: (value) =>
+                      value == null ? 'Please select a document type' : null,
+                ),
+                const SizedBox(height: 16),
+                if (_selectedDocumentType != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth < 400) {
+                          // Stack buttons vertically on narrow screens
+                          return Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    // Implement take photo functionality
+                                  },
+                                  icon: const Icon(
+                                    Icons.camera_alt,
+                                    size: 20,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                  label: const Text('Take Photo'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: AppTheme.primaryColor,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    elevation: 0,
+                                    side: const BorderSide(
+                                      color: AppTheme.primaryColor,
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    // Implement upload file functionality
+                                  },
+                                  icon: const Icon(
+                                    Icons.upload_file,
+                                    size: 20,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                  label: const Text('Upload File'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: AppTheme.primaryColor,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    elevation: 0,
+                                    side: const BorderSide(
+                                      color: AppTheme.primaryColor,
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        // Side by side buttons for wider screens
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  // Implement take photo functionality
+                                },
+                                icon: const Icon(
+                                  Icons.camera_alt,
+                                  size: 20,
+                                  color: AppTheme.primaryColor,
+                                ),
+                                label: const Text('Take Photo'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: AppTheme.primaryColor,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  elevation: 0,
+                                  side: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  // Implement upload file functionality
+                                },
+                                icon: const Icon(
+                                  Icons.upload_file,
+                                  size: 20,
+                                  color: AppTheme.primaryColor,
+                                ),
+                                label: const Text('Upload File'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: AppTheme.primaryColor,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  elevation: 0,
+                                  side: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: _submitForm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Next',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -335,51 +426,43 @@ class _VisitorRegistrationFormState
     List<TextInputFormatter>? inputFormatters,
     int? maxLines,
     String? hintText,
-    TextInputAction? textInputAction,
-    ValueChanged<String>? onChanged,
-    InputDecoration? decoration,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1,
-        ),
-      ),
-      child: TextFormField(
-        controller: controller,
-        decoration: decoration ??
-            InputDecoration(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Container(
+          constraints: BoxConstraints(
+            maxWidth: constraints.maxWidth,
+            minHeight: 56,
+          ),
+          child: TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
               labelText: label,
               hintText: hintText,
               prefixIcon: Icon(
                 prefixIcon,
                 color: AppTheme.primaryColor,
+                size: 20,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
               ),
-              filled: true,
-              fillColor: AppTheme.cardBackgroundColor,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
+                horizontal: 12,
                 vertical: 16,
               ),
             ),
-        validator: validator,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        maxLines: maxLines ?? 1,
-        textInputAction: textInputAction,
-        onChanged: onChanged,
-        style: const TextStyle(
-          fontSize: 16,
-        ),
-        cursorColor: AppTheme.primaryColor,
-      ),
+            validator: validator,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            maxLines: maxLines ?? 1,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.primaryTextColor,
+            ),
+          ),
+        );
+      },
     );
   }
 }

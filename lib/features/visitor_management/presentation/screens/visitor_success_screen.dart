@@ -4,6 +4,7 @@ import 'dart:convert';
 import '../../domain/models/visitor.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:lottie/lottie.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 class VisitorSuccessScreen extends StatefulWidget {
   final Visitor visitor;
@@ -88,145 +89,156 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final padding = ResponsiveUtils.getHorizontalPadding(screenWidth);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 32),
-              if (_showSuccessAnimation)
-                Lottie.asset(
-                  'assets/animations/success.json',
-                  width: 200,
-                  height: 200,
-                  controller: _controller,
-                  repeat: false,
-                ),
-              if (!_showSuccessAnimation) const SizedBox(height: 200),
-              const SizedBox(height: 24),
-              FadeTransition(
-                opacity: _fadeInAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Registration Successful!',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Visitor ID: ${widget.visitor.entryTime?.millisecondsSinceEpoch.toString().substring(5)}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: QrImageView(
-                          data: _visitorQrData,
-                          version: QrVersions.auto,
-                          size: 200.0,
-                          backgroundColor: Colors.white,
-                          eyeStyle: const QrEyeStyle(
-                            eyeShape: QrEyeShape.square,
-                            color: AppTheme.primaryColor,
-                          ),
-                          dataModuleStyle: const QrDataModuleStyle(
-                            dataModuleShape: QrDataModuleShape.square,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _buildDetailCard(
-                        title: 'Visitor Details',
-                        icon: Icons.person,
-                        details: [
-                          DetailItem('Name', widget.visitor.name),
-                          DetailItem('Address', widget.visitor.address),
-                          DetailItem('Contact', widget.visitor.contactNumber),
-                          DetailItem('Email', widget.visitor.email),
-                          if (widget.visitor.vehicleNumber != null)
-                            DetailItem(
-                                'Vehicle', widget.visitor.vehicleNumber!),
-                          DetailItem('Purpose', widget.visitor.purposeOfVisit),
-                          DetailItem('Visitors',
-                              widget.visitor.numberOfVisitors.toString()),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildDetailCard(
-                        title: 'Meeting Details',
-                        icon: Icons.business,
-                        details: [
-                          DetailItem('Department', widget.visitor.department),
-                          DetailItem('Host', widget.visitor.whomToMeet),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildDetailCard(
-                        title: 'Document Details',
-                        icon: Icons.document_scanner,
-                        details: [
-                          DetailItem('Type', widget.visitor.documentType),
-                          if (widget.visitor.documentUrl != null)
-                            DetailItem('Status', 'Uploaded'),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pushNamedAndRemoveUntil(
-                              '/',
-                              (route) => false,
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+          padding: EdgeInsets.symmetric(horizontal: padding, vertical: 24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 32),
+                  if (_showSuccessAnimation)
+                    Lottie.asset(
+                      'assets/animations/success.json',
+                      width: 200,
+                      height: 200,
+                      controller: _controller,
+                      repeat: false,
+                    ),
+                  if (!_showSuccessAnimation) const SizedBox(height: 200),
+                  const SizedBox(height: 24),
+                  FadeTransition(
+                    opacity: _fadeInAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Registration Successful!',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
                             ),
                           ),
-                          child: const Text(
-                            'Back to Home',
+                          const SizedBox(height: 8),
+                          Text(
+                            'Visitor ID: ${widget.visitor.entryTime?.millisecondsSinceEpoch.toString().substring(5)}',
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: QrImageView(
+                              data: _visitorQrData,
+                              version: QrVersions.auto,
+                              size: 200.0,
+                              backgroundColor: Colors.white,
+                              eyeStyle: const QrEyeStyle(
+                                eyeShape: QrEyeShape.square,
+                                color: AppTheme.primaryColor,
+                              ),
+                              dataModuleStyle: const QrDataModuleStyle(
+                                dataModuleShape: QrDataModuleShape.square,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _buildDetailCard(
+                            title: 'Visitor Details',
+                            icon: Icons.person,
+                            details: [
+                              DetailItem('Name', widget.visitor.name),
+                              DetailItem('Address', widget.visitor.address),
+                              DetailItem(
+                                  'Contact', widget.visitor.contactNumber),
+                              DetailItem('Email', widget.visitor.email),
+                              if (widget.visitor.vehicleNumber != null)
+                                DetailItem(
+                                    'Vehicle', widget.visitor.vehicleNumber!),
+                              DetailItem(
+                                  'Purpose', widget.visitor.purposeOfVisit),
+                              DetailItem('Visitors',
+                                  widget.visitor.numberOfVisitors.toString()),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildDetailCard(
+                            title: 'Meeting Details',
+                            icon: Icons.business,
+                            details: [
+                              DetailItem(
+                                  'Department', widget.visitor.department),
+                              DetailItem('Host', widget.visitor.whomToMeet),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildDetailCard(
+                            title: 'Document Details',
+                            icon: Icons.document_scanner,
+                            details: [
+                              DetailItem('Type', widget.visitor.documentType),
+                              if (widget.visitor.documentUrl != null)
+                                DetailItem('Status', 'Uploaded'),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                  '/',
+                                  (route) => false,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Back to Home',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

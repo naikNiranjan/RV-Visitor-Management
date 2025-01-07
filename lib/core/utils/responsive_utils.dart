@@ -37,4 +37,23 @@ class ResponsiveUtils {
       return baseFontSize * 1.4;
     }
   }
+
+  static double getHorizontalPadding(double screenWidth) {
+    if (screenWidth < 600) return 16;
+    if (screenWidth < 1200) return 32;
+    return 64;
+  }
+
+  static double getMaxContentWidth(double screenWidth) {
+    if (screenWidth < 600) return screenWidth - 32;
+    if (screenWidth < 1200) return 600;
+    return 800;
+  }
+
+  static EdgeInsets getScreenPadding(double screenWidth) {
+    return EdgeInsets.symmetric(
+      horizontal: getHorizontalPadding(screenWidth),
+      vertical: 16,
+    );
+  }
 }
