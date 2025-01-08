@@ -8,6 +8,7 @@ import '../screens/visitor_success_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import 'dart:io';
 import './camera_screen.dart';
+import 'package:file_picker/file_picker.dart';
 
 const int _maxVisitors = 15;
 
@@ -36,7 +37,7 @@ class _VisitorAdditionalDetailsFormState
   int _numberOfVisitors = 1;
   String? _photoUrl;
   String? _documentUrl;
-  final bool _sendNotification = false;
+  bool _sendNotification = false;
   File? _photoFile;
   File? _documentFile;
 
@@ -100,17 +101,77 @@ class _VisitorAdditionalDetailsFormState
   }
 
   void _uploadPhoto() async {
-    // TODO: Implement file picker functionality
-    setState(() {
-      _photoUrl = 'dummy_photo_url';
-    });
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+        allowMultiple: false,
+      );
+
+      if (result != null) {
+        setState(() {
+          _photoFile = File(result.files.single.path!);
+          _photoUrl = result.files.single.path;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: SelectableText.rich(
+              TextSpan(
+                text: 'Error picking file: ',
+                children: [
+                  TextSpan(
+                    text: e.toString(),
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+            backgroundColor: Colors.white,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _uploadDocument() async {
-    // TODO: Implement file picker functionality
-    setState(() {
-      _documentUrl = 'dummy_document_url';
-    });
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+        allowMultiple: false,
+      );
+
+      if (result != null) {
+        setState(() {
+          _documentFile = File(result.files.single.path!);
+          _documentUrl = result.files.single.path;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: SelectableText.rich(
+              TextSpan(
+                text: 'Error picking file: ',
+                children: [
+                  TextSpan(
+                    text: e.toString(),
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+            backgroundColor: Colors.white,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _takeDocumentPhoto() async {
@@ -418,7 +479,67 @@ class _VisitorAdditionalDetailsFormState
                     ),
                   ),
                 ],
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppTheme.borderColor,
+                        width: 1,
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.notifications_outlined,
+                              color: AppTheme.primaryColor,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 16),
+                            Text(
+                              'Notification',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        CheckboxListTile(
+                          value: _sendNotification,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              _sendNotification = value ?? false;
+                            });
+                          },
+                          title: const Text('Send notification to host'),
+                          controlAffinity: ListTileControlAffinity.leading,
+                          activeColor: AppTheme.primaryColor,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        if (_sendNotification) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'The host will be notified when the visitor arrives.',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: SizedBox(
@@ -573,25 +694,82 @@ class _VisitorAdditionalDetailsFormState
   Widget _buildPhotoPreview(File? file) {
     if (file == null) return const SizedBox.shrink();
 
+    final extension = file.path.split('.').last.toLowerCase();
+    final isImage = ['jpg', 'jpeg', 'png'].contains(extension);
+
     return Container(
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
         border: Border.all(color: AppTheme.borderColor),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.file(
-          file,
-          height: 200,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return const Center(
-              child: Text('Error loading image'),
-            );
-          },
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isImage)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(
+                file,
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text('Error loading image'),
+                    ),
+                  );
+                },
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(Icons.file_present),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      file.path.split('/').last,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.primaryTextColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      if (file == _photoFile) {
+                        _photoFile = null;
+                        _photoUrl = null;
+                      } else {
+                        _documentFile = null;
+                        _documentUrl = null;
+                      }
+                    });
+                  },
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  label: const Text('Remove'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

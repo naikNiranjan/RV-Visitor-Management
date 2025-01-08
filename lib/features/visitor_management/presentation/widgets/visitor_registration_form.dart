@@ -9,9 +9,9 @@ import '../providers/visitor_form_provider.dart';
 import '../widgets/visitor_additional_details_form.dart';
 import '../../../../core/widgets/base_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
-import 'package:camerawesome/camerawesome_plugin.dart';
 import 'dart:io';
 import './camera_screen.dart';
+import 'package:file_picker/file_picker.dart';
 
 class VisitorRegistrationForm extends ConsumerStatefulWidget {
   final void Function(Visitor visitor)? onSubmitted;
@@ -137,8 +137,48 @@ class _VisitorRegistrationFormState
     );
   }
 
-  Widget _buildPhotoPreview() {
+  Future<void> _pickFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+        allowMultiple: false,
+      );
+
+      if (result != null) {
+        setState(() {
+          _photoFile = File(result.files.single.path!);
+          _photoUrl = result.files.single.path;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: SelectableText.rich(
+              TextSpan(
+                text: 'Error picking file: ',
+                children: [
+                  TextSpan(
+                    text: e.toString(),
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+            backgroundColor: Colors.white,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildFilePreview() {
     if (_photoFile == null) return const SizedBox.shrink();
+
+    final extension = _photoFile!.path.split('.').last.toLowerCase();
+    final isImage = ['jpg', 'jpeg', 'png'].contains(extension);
 
     return Container(
       margin: const EdgeInsets.only(top: 16),
@@ -146,19 +186,68 @@ class _VisitorRegistrationFormState
         border: Border.all(color: AppTheme.borderColor),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.file(
-          _photoFile!,
-          height: 200,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return const Center(
-              child: Text('Error loading image'),
-            );
-          },
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isImage)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(
+                _photoFile!,
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text('Error loading image'),
+                    ),
+                  );
+                },
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(Icons.file_present),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _photoFile!.path.split('/').last,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.primaryTextColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _photoFile = null;
+                      _photoUrl = null;
+                    });
+                  },
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  label: const Text('Remove'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -353,9 +442,7 @@ class _VisitorRegistrationFormState
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    // Implement upload file functionality
-                                  },
+                                  onPressed: _pickFile,
                                   icon: const Icon(
                                     Icons.upload_file,
                                     size: 20,
@@ -406,9 +493,7 @@ class _VisitorRegistrationFormState
                             const SizedBox(width: 8),
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: () {
-                                  // Implement upload file functionality
-                                },
+                                onPressed: _pickFile,
                                 icon: const Icon(
                                   Icons.upload_file,
                                   size: 20,
@@ -436,7 +521,7 @@ class _VisitorRegistrationFormState
                 ],
                 if (_photoFile != null) ...[
                   const SizedBox(height: 16),
-                  _buildPhotoPreview(),
+                  _buildFilePreview(),
                 ],
                 const SizedBox(height: 24),
                 SizedBox(
