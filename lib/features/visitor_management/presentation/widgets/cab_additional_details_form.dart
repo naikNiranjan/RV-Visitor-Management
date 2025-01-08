@@ -5,6 +5,8 @@ import '../../../../core/utils/route_utils.dart';
 import '../../domain/models/visitor.dart';
 import '../screens/visitor_success_screen.dart';
 import '../../domain/models/department_data.dart';
+import 'dart:io';
+import './camera_screen.dart';
 
 class CabAdditionalDetailsForm extends ConsumerStatefulWidget {
   final Visitor visitor;
@@ -27,6 +29,8 @@ class _CabAdditionalDetailsFormState
   bool _sendNotification = false;
   String? _photoUrl;
   String? _documentUrl;
+  File? _photoFile;
+  File? _documentFile;
 
   void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
@@ -50,32 +54,62 @@ class _CabAdditionalDetailsFormState
     }
   }
 
-  void _takePhoto() async {
-    // TODO: Implement camera functionality
-    setState(() {
-      _photoUrl = 'dummy_photo_url';
-    });
+  Future<void> _takePhoto() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(
+          onPhotoTaken: (String path) {
+            setState(() {
+              _photoFile = File(path);
+              _photoUrl = path;
+            });
+          },
+        ),
+      ),
+    );
   }
 
-  void _uploadPhoto() async {
-    // TODO: Implement file picker functionality
-    setState(() {
-      _photoUrl = 'dummy_photo_url';
-    });
+  Future<void> _takeDocumentPhoto() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(
+          onPhotoTaken: (String path) {
+            setState(() {
+              _documentFile = File(path);
+              _documentUrl = path;
+            });
+          },
+        ),
+      ),
+    );
   }
 
-  void _uploadDocument() async {
-    // TODO: Implement file picker functionality
-    setState(() {
-      _documentUrl = 'dummy_document_url';
-    });
-  }
+  Widget _buildPhotoPreview(File? file) {
+    if (file == null) return const SizedBox.shrink();
 
-  void _takeDocumentPhoto() async {
-    // TODO: Implement camera functionality for document
-    setState(() {
-      _documentUrl = 'dummy_document_photo_url';
-    });
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.file(
+          file,
+          height: 200,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(
+              child: Text('Error loading image'),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -170,10 +204,7 @@ class _CabAdditionalDetailsFormState
                 ),
               ],
             ),
-            if (_photoUrl != null) ...[
-              const SizedBox(height: 8),
-              const Text('Photo uploaded successfully'),
-            ],
+            if (_photoFile != null) _buildPhotoPreview(_photoFile),
             const SizedBox(height: 24),
             const Text(
               'Document',
@@ -210,10 +241,7 @@ class _CabAdditionalDetailsFormState
                 ),
               ],
             ),
-            if (_documentUrl != null) ...[
-              const SizedBox(height: 8),
-              const Text('Document uploaded successfully'),
-            ],
+            if (_documentFile != null) _buildPhotoPreview(_documentFile),
             const SizedBox(height: 24),
             DropdownButtonFormField<String>(
               value: _selectedStaffId,

@@ -6,6 +6,8 @@ import '../../../../core/utils/route_utils.dart';
 import '../../domain/models/visitor.dart';
 import '../screens/visitor_success_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import 'dart:io';
+import './camera_screen.dart';
 
 const int _maxVisitors = 15;
 
@@ -35,6 +37,8 @@ class _VisitorAdditionalDetailsFormState
   String? _photoUrl;
   String? _documentUrl;
   final bool _sendNotification = false;
+  File? _photoFile;
+  File? _documentFile;
 
   @override
   void initState() {
@@ -79,11 +83,20 @@ class _VisitorAdditionalDetailsFormState
     return null;
   }
 
-  void _takePhoto() async {
-    // TODO: Implement camera functionality
-    setState(() {
-      _photoUrl = 'dummy_photo_url';
-    });
+  Future<void> _takePhoto() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(
+          onPhotoTaken: (String path) {
+            setState(() {
+              _photoFile = File(path);
+              _photoUrl = path;
+            });
+          },
+        ),
+      ),
+    );
   }
 
   void _uploadPhoto() async {
@@ -100,11 +113,20 @@ class _VisitorAdditionalDetailsFormState
     });
   }
 
-  void _takeDocumentPhoto() async {
-    // TODO: Implement camera functionality for document
-    setState(() {
-      _documentUrl = 'dummy_document_photo_url';
-    });
+  Future<void> _takeDocumentPhoto() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(
+          onPhotoTaken: (String path) {
+            setState(() {
+              _documentFile = File(path);
+              _documentUrl = path;
+            });
+          },
+        ),
+      ),
+    );
   }
 
   void _sendNotificationToHost() async {
@@ -219,23 +241,29 @@ class _VisitorAdditionalDetailsFormState
                         const Divider(height: 1),
                         Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Row(
+                          child: Column(
                             children: [
-                              Expanded(
-                                child: _buildPhotoButton(
-                                  icon: Icons.camera_alt_outlined,
-                                  label: 'Take Photo',
-                                  onPressed: _takePhoto,
-                                ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildPhotoButton(
+                                      icon: Icons.camera_alt_outlined,
+                                      label: 'Take Photo',
+                                      onPressed: _takePhoto,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _buildPhotoButton(
+                                      icon: Icons.upload_file,
+                                      label: 'Upload Photo',
+                                      onPressed: _uploadPhoto,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildPhotoButton(
-                                  icon: Icons.upload_file,
-                                  label: 'Upload Photo',
-                                  onPressed: _uploadPhoto,
-                                ),
-                              ),
+                              if (_photoFile != null)
+                                _buildPhotoPreview(_photoFile),
                             ],
                           ),
                         ),
@@ -537,6 +565,32 @@ class _VisitorAdditionalDetailsFormState
         ),
         padding: const EdgeInsets.symmetric(
           vertical: 12,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoPreview(File? file) {
+    if (file == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.file(
+          file,
+          height: 200,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(
+              child: Text('Error loading image'),
+            );
+          },
         ),
       ),
     );

@@ -8,6 +8,8 @@ import '../../../../core/utils/responsive_utils.dart';
 import '../../domain/models/visitor.dart';
 import '../providers/visitor_form_provider.dart';
 import '../screens/visitor_success_screen.dart';
+import 'dart:io';
+import './camera_screen.dart';
 
 class CabRegistrationForm extends ConsumerStatefulWidget {
   const CabRegistrationForm({super.key});
@@ -26,9 +28,17 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
   final _vehicleController = TextEditingController();
   final _driverNameController = TextEditingController();
   final _driverContactController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _emergencyNameController = TextEditingController();
+  final _emergencyContactController = TextEditingController();
   String? _selectedCabProvider;
   String? _selectedDepartmentCode;
   String? _selectedStaffId;
+  File? _photoFile;
+  String? _photoUrl;
+  File? _documentFile;
+  String? _documentUrl;
+  String? _selectedDocumentType;
 
   final List<String> _cabProviders = [
     'Uber',
@@ -46,6 +56,9 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
     _purposeController.dispose();
     _driverNameController.dispose();
     _driverContactController.dispose();
+    _emailController.dispose();
+    _emergencyNameController.dispose();
+    _emergencyContactController.dispose();
     super.dispose();
   }
 
@@ -83,23 +96,59 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
     return null;
   }
 
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return null; // Optional field
+    }
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+      caseSensitive: false,
+    );
+    if (!emailRegex.hasMatch(value)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  }
+
+  String? _validateEmergencyContact(String? value) {
+    if (value == null || value.isEmpty) {
+      return null; // Optional field
+    }
+    if (value.length != 10) {
+      return 'Contact number must be 10 digits';
+    }
+    return null;
+  }
+
   void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
       final visitor = Visitor(
         name: _nameController.text,
         address: _addressController.text,
         contactNumber: _contactController.text,
-        email: '',
+        email: _emailController.text.isEmpty ? '' : _emailController.text,
         vehicleNumber: _vehicleController.text,
         purposeOfVisit: _purposeController.text,
         numberOfVisitors: 1,
         whomToMeet: _selectedStaffId ?? '',
         department: _selectedDepartmentCode ?? '',
-        documentType: '',
+        documentType: _selectedDocumentType ?? '',
         entryTime: DateTime.now(),
         cabProvider: _selectedCabProvider,
-        driverName: _driverNameController.text,
-        driverContact: _driverContactController.text,
+        driverName: _driverNameController.text.isEmpty
+            ? null
+            : _driverNameController.text,
+        driverContact: _driverContactController.text.isEmpty
+            ? null
+            : _driverContactController.text,
+        photoUrl: _photoUrl,
+        documentUrl: _documentUrl,
+        emergencyContactName: _emergencyNameController.text.isEmpty
+            ? null
+            : _emergencyNameController.text,
+        emergencyContactNumber: _emergencyContactController.text.isEmpty
+            ? null
+            : _emergencyContactController.text,
       );
 
       ref.read(visitorFormProvider.notifier).submitVisitor(visitor);
@@ -111,6 +160,64 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
         ),
       );
     }
+  }
+
+  Future<void> _takePhoto() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(
+          onPhotoTaken: (String path) {
+            setState(() {
+              _photoFile = File(path);
+              _photoUrl = path;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _takeDocumentPhoto() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(
+          onPhotoTaken: (String path) {
+            setState(() {
+              _documentFile = File(path);
+              _documentUrl = path;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoPreview(File? file) {
+    if (file == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.file(
+          file,
+          height: 200,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(
+              child: Text('Error loading image'),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -181,57 +288,6 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: _selectedCabProvider,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Cab Provider *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(
-                      Icons.local_taxi_outlined,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  items: _cabProviders.map((provider) {
-                    return DropdownMenuItem(
-                      value: provider,
-                      child: Text(
-                        provider,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) =>
-                      setState(() => _selectedCabProvider = value),
-                  validator: (value) =>
-                      value == null ? 'Please select a cab provider' : null,
-                ),
-                const SizedBox(height: 16),
-                _buildInputField(
-                  controller: _vehicleController,
-                  label: 'Vehicle Number',
-                  prefixIcon: Icons.directions_car_outlined,
-                  textCapitalization: TextCapitalization.characters,
-                ),
-                const SizedBox(height: 16),
-                _buildInputField(
-                  controller: _driverNameController,
-                  label: 'Driver Name',
-                  prefixIcon: Icons.person_outline,
-                ),
-                const SizedBox(height: 16),
-                _buildInputField(
-                  controller: _driverContactController,
-                  label: 'Driver Contact',
-                  prefixIcon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
                   value: _selectedDepartmentCode,
                   isExpanded: true,
                   decoration: const InputDecoration(
@@ -295,6 +351,208 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
                   validator: (value) =>
                       value == null ? 'Please select whom to meet' : null,
                 ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _vehicleController,
+                  label: 'Vehicle Number *',
+                  hintText: 'e.g., KA-01-AB-1234',
+                  prefixIcon: Icons.directions_car_outlined,
+                  textCapitalization: TextCapitalization.characters,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter vehicle number'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedCabProvider,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Cab Provider *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.local_taxi_outlined,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  items: _cabProviders.map((provider) {
+                    return DropdownMenuItem(
+                      value: provider,
+                      child: Text(
+                        provider,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) =>
+                      setState(() => _selectedCabProvider = value),
+                  validator: (value) =>
+                      value == null ? 'Please select a cab provider' : null,
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Additional Details (Optional)',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _emailController,
+                  label: 'Email Address',
+                  prefixIcon: Icons.email_outlined,
+                  validator: _validateEmail,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _emergencyNameController,
+                  label: 'Emergency Contact Name',
+                  prefixIcon: Icons.person_outline,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _emergencyContactController,
+                  label: 'Emergency Contact Number',
+                  prefixIcon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  validator: _validateEmergencyContact,
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Driver Details (Optional)',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _driverNameController,
+                  label: 'Driver Name',
+                  prefixIcon: Icons.person_outline,
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _driverContactController,
+                  label: 'Driver Contact',
+                  prefixIcon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                DropdownButtonFormField<String>(
+                  value: _selectedDocumentType,
+                  decoration: const InputDecoration(
+                    labelText: 'Document Type *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.document_scanner,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  items: documentTypes.map((type) {
+                    return DropdownMenuItem(
+                      value: type.value,
+                      child: Text(type.label),
+                    );
+                  }).toList(),
+                  onChanged: (value) =>
+                      setState(() => _selectedDocumentType = value),
+                  validator: (value) =>
+                      value == null ? 'Please select a document type' : null,
+                ),
+                const SizedBox(height: 16),
+                if (_selectedDocumentType != null) ...[
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppTheme.borderColor,
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.document_scanner_outlined,
+                                color: AppTheme.primaryColor,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 16),
+                              Text(
+                                'Identity Document',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(height: 1),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _takeDocumentPhoto,
+                                      icon: const Icon(Icons.camera_alt),
+                                      label: const Text('Take Photo'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        foregroundColor: AppTheme.primaryColor,
+                                        elevation: 0,
+                                        side: BorderSide(
+                                          color: AppTheme.primaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed:
+                                          () {}, // TODO: Implement upload
+                                      icon: const Icon(Icons.upload_file),
+                                      label: const Text('Upload File'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        foregroundColor: AppTheme.primaryColor,
+                                        elevation: 0,
+                                        side: BorderSide(
+                                          color: AppTheme.primaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (_documentFile != null)
+                                _buildPhotoPreview(_documentFile),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
