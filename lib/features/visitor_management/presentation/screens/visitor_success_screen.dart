@@ -6,6 +6,8 @@ import '../../../../core/theme/app_theme.dart';
 import 'package:lottie/lottie.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
+import 'dart:typed_data';
 
 class VisitorSuccessScreen extends StatefulWidget {
   final Visitor visitor;
@@ -92,14 +94,20 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
   Future<void> _updateVisitorStatus() async {
     try {
       final String visitorId = widget.visitor.entryTime!.millisecondsSinceEpoch.toString();
-      await FirebaseFirestore.instance
-          .collection('visitors')
-          .doc(visitorId)
-          .update({
+      
+      // Create update data
+      final Map<String, dynamic> updateData = {
         'status': 'checked_in',
         'updatedAt': FieldValue.serverTimestamp(),
         'checkInTime': FieldValue.serverTimestamp(),
-      });
+      };
+
+      // Update Firestore
+      await FirebaseFirestore.instance
+          .collection('visitors')
+          .doc(visitorId)
+          .update(updateData);
+
     } catch (e) {
       print('Error updating visitor status: $e'); // For debugging
       if (mounted) {

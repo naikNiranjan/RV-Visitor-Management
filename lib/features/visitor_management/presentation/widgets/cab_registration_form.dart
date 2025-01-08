@@ -139,7 +139,7 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Processing...'),
+              content: Text('Saving visitor data...'),
               duration: Duration(seconds: 1),
             ),
           );
@@ -164,8 +164,6 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
           driverContact: _driverContactController.text.isEmpty
               ? null
               : _driverContactController.text,
-          photoUrl: _photoUrl,
-          documentUrl: _documentUrl,
           emergencyContactName: _emergencyNameController.text.isEmpty
               ? null
               : _emergencyNameController.text,
@@ -176,7 +174,7 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
           type: 'cab',
         );
 
-        // Save to Firebase
+        // Save to Firestore
         await ref.read(firebaseServiceProvider).saveVisitorData(
           visitor,
           photoFile: _photoFile,
@@ -184,7 +182,7 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
         );
 
         if (mounted) {
-          // Navigate to success screen using pushReplacement
+          // Navigate to success screen
           await Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => VisitorSuccessScreen(
@@ -197,19 +195,8 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: SelectableText.rich(
-                TextSpan(
-                  text: 'Error saving visitor data: ',
-                  children: [
-                    TextSpan(
-                      text: e.toString(),
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ],
-                ),
-              ),
-              backgroundColor: Colors.white,
-              behavior: SnackBarBehavior.floating,
+              content: Text('Error saving visitor data: $e'),
+              backgroundColor: Colors.red,
             ),
           );
         }

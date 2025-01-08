@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import 'register_screen.dart';
 import 'return_visitor_details_screen.dart';
 import '../../../../core/utils/route_utils.dart';
 import '../../../../core/widgets/base_screen.dart';
+import '../providers/firebase_provider.dart';
 
-class QuickCheckInScreen extends StatefulWidget {
+class QuickCheckInScreen extends ConsumerStatefulWidget {
   const QuickCheckInScreen({super.key});
 
   @override
-  State<QuickCheckInScreen> createState() => _QuickCheckInScreenState();
+  ConsumerState<QuickCheckInScreen> createState() => _QuickCheckInScreenState();
 }
 
-class _QuickCheckInScreenState extends State<QuickCheckInScreen> {
+class _QuickCheckInScreenState extends ConsumerState<QuickCheckInScreen> {
   final _phoneController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -34,25 +37,68 @@ class _QuickCheckInScreenState extends State<QuickCheckInScreen> {
     return null;
   }
 
-  void _handleCheckIn() {
+  Future<void> _handleCheckIn() async {
     if (_formKey.currentState?.validate() ?? false) {
-      // This is dummy data - you would normally fetch this from your database
-      final visitorData = {
-        'name': 'John Doe',
-        'phone': _phoneController.text,
-        'email': 'john1111.doe@example.com',
-        'vehicleNumber': 'KA01AB1234',
-      };
+      setState(() {
+        _isLoading = true;
+      });
 
-      Navigator.push(
-        context,
-        RouteUtils.noAnimationRoute(
-          ReturnVisitorDetailsScreen(
-            phoneNumber: _phoneController.text,
-            visitorData: visitorData,
-          ),
-        ),
-      );
+      try {
+        final visitorData = await ref
+            .read(firebaseServiceProvider)
+            .findVisitorByPhone(_phoneController.text);
+
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+
+          if (visitorData != null) {
+            // Visitor found, navigate to return visitor screen
+            Navigator.push(
+              context,
+              RouteUtils.noAnimationRoute(
+                ReturnVisitorDetailsScreen(
+                  phoneNumber: _phoneController.text,
+                  visitorData: visitorData,
+                ),
+              ),
+            );
+          } else {
+            // No visitor found, show registration prompt
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  'No registered visitor found with this number. Please register first.',
+                ),
+                action: SnackBarAction(
+                  label: 'Register',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      RouteUtils.noAnimationRoute(
+                        const RegisterScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -173,7 +219,7 @@ class _QuickCheckInScreenState extends State<QuickCheckInScreen> {
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: _handleCheckIn,
+                      onPressed: _isLoading ? null : _handleCheckIn,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
@@ -182,13 +228,22 @@ class _QuickCheckInScreenState extends State<QuickCheckInScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Check In',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Check In',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 24),
