@@ -205,12 +205,12 @@ class _VisitorRegistrationFormState
                       ),
                     );
                   }).toList(),
-                  onChanged: (value) {
+                    onChanged: (value) {
                     setState(() {
                       _selectedDepartmentCode = value;
-                      _selectedStaffId = null;
+                      _selectedStaffId = null; // Reset staff selection when department changes
                     });
-                  },
+                    },
                   validator: (value) =>
                       value == null ? 'Please select a department' : null,
                 ),
@@ -219,28 +219,31 @@ class _VisitorRegistrationFormState
                   value: _selectedStaffId,
                   isExpanded: true,
                   decoration: const InputDecoration(
-                    labelText: 'Whom to Meet *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(
-                      Icons.person_outline,
-                      color: AppTheme.primaryColor,
-                    ),
+                  labelText: 'Whom to Meet *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(
+                    Icons.person_outline,
+                    color: AppTheme.primaryColor,
+                  ),
                   ),
                   menuMaxHeight: 300,
-                  items: allStaff.map((staff) {
-                    return DropdownMenuItem(
-                      value: staff.value,
-                      child: Text(
-                        staff.label,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) =>
-                      setState(() => _selectedStaffId = value),
-                  validator: (value) =>
-                      value == null ? 'Please select whom to meet' : null,
+                  items: _selectedDepartmentCode == null
+                    ? []
+                    : departmentStaff[_selectedDepartmentCode]
+                        ?.map((staff) => DropdownMenuItem(
+                          value: staff.value,
+                          child: Text(
+                            staff.label,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          ))
+                        ?.toList() ??
+                      [],
+                  onChanged: _selectedDepartmentCode == null
+                    ? null
+                    : (value) => setState(() => _selectedStaffId = value),
+                  validator: (value) => value == null ? 'Please select whom to meet' : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(

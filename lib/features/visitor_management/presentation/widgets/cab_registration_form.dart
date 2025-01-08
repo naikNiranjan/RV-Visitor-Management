@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/models/department_data.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/route_utils.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import '../../domain/models/visitor.dart';
 import '../providers/visitor_form_provider.dart';
 import '../screens/visitor_success_screen.dart';
-import '../../../../core/widgets/base_screen.dart';
+
 
 class CabRegistrationForm extends ConsumerStatefulWidget {
   const CabRegistrationForm({super.key});
@@ -27,6 +28,8 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
   final _driverNameController = TextEditingController();
   final _driverContactController = TextEditingController();
   String? _selectedCabProvider;
+  String? _selectedDepartmentCode;
+  String? _selectedStaffId;
 
   final List<String> _cabProviders = [
     'Uber',
@@ -91,8 +94,8 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
         vehicleNumber: _vehicleController.text,
         purposeOfVisit: _purposeController.text,
         numberOfVisitors: 1,
-        whomToMeet: '',
-        department: '',
+        whomToMeet: _selectedStaffId ?? '',
+        department: _selectedDepartmentCode ?? '',
         documentType: '',
         entryTime: DateTime.now(),
         cabProvider: _selectedCabProvider,
@@ -227,6 +230,68 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(10),
                   ],
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedDepartmentCode,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                  labelText: 'Department *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(
+                    Icons.business_outlined,
+                    color: AppTheme.primaryColor,
+                  ),
+                  ),
+                  menuMaxHeight: 300,
+                  items: departments.map((department) {
+                  return DropdownMenuItem(
+                    value: department.value,
+                    child: Text(
+                    department.label,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 14),
+                    ),
+                  );
+                  }).toList(),
+                  onChanged: (value) {
+                  setState(() {
+                    _selectedDepartmentCode = value;
+                    _selectedStaffId = null; // Reset staff selection when department changes
+                  });
+                  },
+                  validator: (value) => value == null ? 'Please select a department' : null,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedStaffId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                  labelText: 'Whom to Meet *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(
+                    Icons.person_outline,
+                    color: AppTheme.primaryColor,
+                  ),
+                  ),
+                  menuMaxHeight: 300,
+                  items: _selectedDepartmentCode == null
+                    ? []
+                    : departmentStaff[_selectedDepartmentCode]
+                      ?.map((staff) => DropdownMenuItem(
+                        value: staff.value,
+                        child: Text(
+                          staff.label,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        ))
+                      ?.toList() ??
+                    [],
+                  onChanged: _selectedDepartmentCode == null
+                    ? null
+                    : (value) => setState(() => _selectedStaffId = value),
+                  validator: (value) => value == null ? 'Please select whom to meet' : null,
                 ),
                 const SizedBox(height: 24),
                 SizedBox(

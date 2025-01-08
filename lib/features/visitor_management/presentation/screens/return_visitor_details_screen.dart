@@ -200,50 +200,55 @@ class _ReturnVisitorDetailsScreenState
                     value == null ? 'Please select a department' : null,
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _selectedStaffId,
-                isExpanded: true,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black87,
-                ),
-                dropdownColor: Colors.white,
-                decoration: InputDecoration(
-                  labelText: 'Whom to Meet *',
-                  labelStyle: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[700],
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.person_outline,
-                    color: AppTheme.iconColor,
-                    size: 20,
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: AppTheme.cardBackgroundColor,
-                ),
-                items: allStaff
-                    .map((staff) => DropdownMenuItem<String>(
-                          value: staff.value,
-                          child: Text(
-                            staff.label,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.black87,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) => setState(() => _selectedStaffId = value),
-                validator: (value) =>
-                    value == null ? 'Please select whom to meet' : null,
-              ),
+                    DropdownButtonFormField<String>(
+                      value: _selectedStaffId,
+                      isExpanded: true,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black87,
+                      ),
+                      dropdownColor: Colors.white,
+                      decoration: InputDecoration(
+                        labelText: 'Whom to Meet *',
+                        labelStyle: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.person_outline,
+                          color: AppTheme.iconColor,
+                          size: 20,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: AppTheme.cardBackgroundColor,
+                      ),
+                      items: _selectedDepartmentCode == null
+                          ? []
+                          : departmentStaff[_selectedDepartmentCode]?.map((staff) {
+                              return DropdownMenuItem<String>(
+                                value: staff.value,
+                                child: Text(
+                                  staff.label,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black87,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList() ?? [],
+                      onChanged: _selectedDepartmentCode == null
+                          ? null
+                          : (value) => setState(() => _selectedStaffId = value),
+                      validator: (value) => value == null ? 'Please select whom to meet' : null,
+                    ),
+
+
+
               const SizedBox(height: 12),
               TextFormField(
                 controller: _purposeController,
