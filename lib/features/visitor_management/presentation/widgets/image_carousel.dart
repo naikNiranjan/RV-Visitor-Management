@@ -59,7 +59,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
 
         return Column(
           children: [
-            Container(
+            SizedBox(
               height: imageHeight,
               child: PageView.builder(
                 controller: _pageController,

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_app_bar.dart';
-import '../widgets/app_drawer.dart';
 import '../../../../core/widgets/base_screen.dart';
 
 class MoreScreen extends StatelessWidget {

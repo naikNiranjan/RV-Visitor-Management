@@ -34,7 +34,7 @@ class _VisitorAdditionalDetailsFormState
   int _numberOfVisitors = 1;
   String? _photoUrl;
   String? _documentUrl;
-  bool _sendNotification = false;
+  final bool _sendNotification = false;
 
   @override
   void initState() {

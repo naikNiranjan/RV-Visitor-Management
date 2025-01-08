@@ -9,7 +9,6 @@ import '../../domain/models/visitor.dart';
 import '../providers/visitor_form_provider.dart';
 import '../screens/visitor_success_screen.dart';
 
-
 class CabRegistrationForm extends ConsumerStatefulWidget {
   const CabRegistrationForm({super.key});
 
@@ -236,62 +235,65 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
                   value: _selectedDepartmentCode,
                   isExpanded: true,
                   decoration: const InputDecoration(
-                  labelText: 'Department *',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    Icons.business_outlined,
-                    color: AppTheme.primaryColor,
-                  ),
+                    labelText: 'Department *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.business_outlined,
+                      color: AppTheme.primaryColor,
+                    ),
                   ),
                   menuMaxHeight: 300,
                   items: departments.map((department) {
-                  return DropdownMenuItem(
-                    value: department.value,
-                    child: Text(
-                    department.label,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14),
-                    ),
-                  );
+                    return DropdownMenuItem(
+                      value: department.value,
+                      child: Text(
+                        department.label,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    );
                   }).toList(),
                   onChanged: (value) {
-                  setState(() {
-                    _selectedDepartmentCode = value;
-                    _selectedStaffId = null; // Reset staff selection when department changes
-                  });
+                    setState(() {
+                      _selectedDepartmentCode = value;
+                      _selectedStaffId =
+                          null; // Reset staff selection when department changes
+                    });
                   },
-                  validator: (value) => value == null ? 'Please select a department' : null,
+                  validator: (value) =>
+                      value == null ? 'Please select a department' : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: _selectedStaffId,
                   isExpanded: true,
                   decoration: const InputDecoration(
-                  labelText: 'Whom to Meet *',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    Icons.person_outline,
-                    color: AppTheme.primaryColor,
-                  ),
+                    labelText: 'Whom to Meet *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.person_outline,
+                      color: AppTheme.primaryColor,
+                    ),
                   ),
                   menuMaxHeight: 300,
                   items: _selectedDepartmentCode == null
-                    ? []
-                    : departmentStaff[_selectedDepartmentCode]
-                      ?.map((staff) => DropdownMenuItem(
-                        value: staff.value,
-                        child: Text(
-                          staff.label,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        ))
-                      ?.toList() ??
-                    [],
+                      ? []
+                      : departmentStaff[_selectedDepartmentCode]
+                              ?.map((staff) => DropdownMenuItem(
+                                    value: staff.value,
+                                    child: Text(
+                                      staff.label,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ))
+                              .toList() ??
+                          [],
                   onChanged: _selectedDepartmentCode == null
-                    ? null
-                    : (value) => setState(() => _selectedStaffId = value),
-                  validator: (value) => value == null ? 'Please select whom to meet' : null,
+                      ? null
+                      : (value) => setState(() => _selectedStaffId = value),
+                  validator: (value) =>
+                      value == null ? 'Please select whom to meet' : null,
                 ),
                 const SizedBox(height: 24),
                 SizedBox(

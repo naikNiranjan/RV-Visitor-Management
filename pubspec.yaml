@@ -38,6 +38,10 @@ dependencies:
   json_annotation: ^4.9.0
   lottie: ^2.7.0
   qr_flutter: ^4.1.0
+  camerawesome: ^2.1.0
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.15.3
+  cloud_firestore: ^4.13.6
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

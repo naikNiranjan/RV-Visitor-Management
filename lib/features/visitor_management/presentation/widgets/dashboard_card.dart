@@ -11,14 +11,14 @@ class DashboardCard extends StatelessWidget {
   final TextStyle? subtitleStyle;
 
   const DashboardCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.onTap,
     this.titleStyle,
     this.subtitleStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

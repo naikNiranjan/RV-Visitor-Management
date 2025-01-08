@@ -131,7 +131,7 @@ class _QuickCheckInScreenState extends State<QuickCheckInScreen> {
                     ],
                   ),
                   const SizedBox(height: 32),
-                  Container(
+                  SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () {

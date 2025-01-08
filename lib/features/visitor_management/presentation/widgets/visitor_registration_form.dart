@@ -9,6 +9,9 @@ import '../providers/visitor_form_provider.dart';
 import '../widgets/visitor_additional_details_form.dart';
 import '../../../../core/widgets/base_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import 'package:camerawesome/camerawesome_plugin.dart';
+import 'dart:io';
+import './camera_screen.dart';
 
 class VisitorRegistrationForm extends ConsumerStatefulWidget {
   final void Function(Visitor visitor)? onSubmitted;
@@ -33,6 +36,8 @@ class _VisitorRegistrationFormState
   String? _selectedDepartmentCode;
   String? _selectedStaffId;
   String? _selectedDocumentType;
+  File? _photoFile;
+  String? _photoUrl;
 
   @override
   void dispose() {
@@ -114,6 +119,48 @@ class _VisitorRegistrationFormState
         ),
       );
     }
+  }
+
+  Future<void> _takePhoto() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(
+          onPhotoTaken: (String path) {
+            setState(() {
+              _photoFile = File(path);
+              _photoUrl = path;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoPreview() {
+    if (_photoFile == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppTheme.borderColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.file(
+          _photoFile!,
+          height: 200,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(
+              child: Text('Error loading image'),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -205,12 +252,13 @@ class _VisitorRegistrationFormState
                       ),
                     );
                   }).toList(),
-                    onChanged: (value) {
+                  onChanged: (value) {
                     setState(() {
                       _selectedDepartmentCode = value;
-                      _selectedStaffId = null; // Reset staff selection when department changes
+                      _selectedStaffId =
+                          null; // Reset staff selection when department changes
                     });
-                    },
+                  },
                   validator: (value) =>
                       value == null ? 'Please select a department' : null,
                 ),
@@ -219,31 +267,32 @@ class _VisitorRegistrationFormState
                   value: _selectedStaffId,
                   isExpanded: true,
                   decoration: const InputDecoration(
-                  labelText: 'Whom to Meet *',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(
-                    Icons.person_outline,
-                    color: AppTheme.primaryColor,
-                  ),
+                    labelText: 'Whom to Meet *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.person_outline,
+                      color: AppTheme.primaryColor,
+                    ),
                   ),
                   menuMaxHeight: 300,
                   items: _selectedDepartmentCode == null
-                    ? []
-                    : departmentStaff[_selectedDepartmentCode]
-                        ?.map((staff) => DropdownMenuItem(
-                          value: staff.value,
-                          child: Text(
-                            staff.label,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                          ))
-                        ?.toList() ??
-                      [],
+                      ? []
+                      : departmentStaff[_selectedDepartmentCode]
+                              ?.map((staff) => DropdownMenuItem(
+                                    value: staff.value,
+                                    child: Text(
+                                      staff.label,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ))
+                              .toList() ??
+                          [],
                   onChanged: _selectedDepartmentCode == null
-                    ? null
-                    : (value) => setState(() => _selectedStaffId = value),
-                  validator: (value) => value == null ? 'Please select whom to meet' : null,
+                      ? null
+                      : (value) => setState(() => _selectedStaffId = value),
+                  validator: (value) =>
+                      value == null ? 'Please select whom to meet' : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
@@ -280,9 +329,7 @@ class _VisitorRegistrationFormState
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    // Implement take photo functionality
-                                  },
+                                  onPressed: _takePhoto,
                                   icon: const Icon(
                                     Icons.camera_alt,
                                     size: 20,
@@ -336,9 +383,7 @@ class _VisitorRegistrationFormState
                           children: [
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: () {
-                                  // Implement take photo functionality
-                                },
+                                onPressed: _takePhoto,
                                 icon: const Icon(
                                   Icons.camera_alt,
                                   size: 20,
@@ -388,6 +433,10 @@ class _VisitorRegistrationFormState
                       },
                     ),
                   ),
+                ],
+                if (_photoFile != null) ...[
+                  const SizedBox(height: 16),
+                  _buildPhotoPreview(),
                 ],
                 const SizedBox(height: 24),
                 SizedBox(

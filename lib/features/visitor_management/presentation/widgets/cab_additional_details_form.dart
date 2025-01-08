@@ -124,12 +124,13 @@ class _CabAdditionalDetailsFormState
                         child: Text(dept.label),
                       ))
                   .toList(),
-                onChanged: (value) {
+              onChanged: (value) {
                 setState(() {
                   _selectedDepartmentCode = value;
-                  _selectedStaffId = null; // Reset staff selection when department changes
+                  _selectedStaffId =
+                      null; // Reset staff selection when department changes
                 });
-                },
+              },
               validator: (value) =>
                   value == null ? 'Please select a department' : null,
             ),
@@ -217,30 +218,31 @@ class _CabAdditionalDetailsFormState
             DropdownButtonFormField<String>(
               value: _selectedStaffId,
               decoration: InputDecoration(
-              labelText: 'Whom to Meet *',
-              prefixIcon: const Icon(
-                Icons.person_outline,
-                color: AppTheme.iconColor,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              filled: true,
-              fillColor: AppTheme.cardBackgroundColor,
+                labelText: 'Whom to Meet *',
+                prefixIcon: const Icon(
+                  Icons.person_outline,
+                  color: AppTheme.iconColor,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: AppTheme.cardBackgroundColor,
               ),
               items: _selectedDepartmentCode == null
-                ? []
-                : departmentStaff[_selectedDepartmentCode]
-                  ?.map((staff) => DropdownMenuItem<String>(
-                    value: staff.value,
-                    child: Text(staff.label),
-                    ))
-                  ?.toList() ??
-                [],
+                  ? []
+                  : departmentStaff[_selectedDepartmentCode]
+                          ?.map((staff) => DropdownMenuItem<String>(
+                                value: staff.value,
+                                child: Text(staff.label),
+                              ))
+                          .toList() ??
+                      [],
               onChanged: _selectedDepartmentCode == null
-                ? null
-                : (value) => setState(() => _selectedStaffId = value),
-              validator: (value) => value == null ? 'Please select whom to meet' : null,
+                  ? null
+                  : (value) => setState(() => _selectedStaffId = value),
+              validator: (value) =>
+                  value == null ? 'Please select whom to meet' : null,
             ),
             const SizedBox(height: 24),
             CheckboxListTile(
