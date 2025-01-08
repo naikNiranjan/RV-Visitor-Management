@@ -12,23 +12,21 @@ class Visitor with _$Visitor {
     required String email,
     String? vehicleNumber,
     required String purposeOfVisit,
-    String? photoUrl,
     required int numberOfVisitors,
     required String whomToMeet,
     required String department,
     required String documentType,
+    DateTime? entryTime,
+    String? photoUrl,
     String? documentUrl,
-    String? emergencyContactName,
-    String? emergencyContactNumber,
     String? cabProvider,
     String? driverName,
     String? driverContact,
+    String? emergencyContactName,
+    String? emergencyContactNumber,
     @Default(false) bool sendNotification,
-    @Default(false) bool isApproved,
-    DateTime? entryTime,
-    DateTime? exitTime,
+    @Default('visitor') String type,
   }) = _Visitor;
 
-  factory Visitor.fromJson(Map<String, dynamic> json) =>
-      _$VisitorFromJson(json);
+  factory Visitor.fromJson(Map<String, dynamic> json) => _$VisitorFromJson(json);
 }

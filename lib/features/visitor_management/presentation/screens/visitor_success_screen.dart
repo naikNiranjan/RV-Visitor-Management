@@ -5,6 +5,7 @@ import '../../domain/models/visitor.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:lottie/lottie.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class VisitorSuccessScreen extends StatefulWidget {
   final Visitor visitor;
@@ -74,6 +75,7 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
           setState(() {
             _showSuccessAnimation = false;
           });
+          _updateVisitorStatus();
         }
       });
     });
@@ -85,6 +87,41 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _updateVisitorStatus() async {
+    try {
+      final String visitorId = widget.visitor.entryTime!.millisecondsSinceEpoch.toString();
+      await FirebaseFirestore.instance
+          .collection('visitors')
+          .doc(visitorId)
+          .update({
+        'status': 'checked_in',
+        'updatedAt': FieldValue.serverTimestamp(),
+        'checkInTime': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error updating visitor status: $e'); // For debugging
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: SelectableText.rich(
+              TextSpan(
+                text: 'Error updating status: ',
+                children: [
+                  TextSpan(
+                    text: e.toString(),
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+            backgroundColor: Colors.white,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override

@@ -11,6 +11,7 @@ import '../screens/visitor_success_screen.dart';
 import 'dart:io';
 import './camera_screen.dart';
 import 'package:file_picker/file_picker.dart';
+import '../providers/firebase_provider.dart';
 
 class CabRegistrationForm extends ConsumerStatefulWidget {
   const CabRegistrationForm({super.key});
@@ -131,46 +132,88 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final visitor = Visitor(
-        name: _nameController.text,
-        address: _addressController.text,
-        contactNumber: _contactController.text,
-        email: _emailController.text.isEmpty ? '' : _emailController.text,
-        vehicleNumber: _vehicleController.text,
-        purposeOfVisit: _purposeController.text,
-        numberOfVisitors: 1,
-        whomToMeet: _selectedStaffId ?? '',
-        department: _selectedDepartmentCode ?? '',
-        documentType: _selectedDocumentType ?? '',
-        entryTime: DateTime.now(),
-        cabProvider: _selectedCabProvider,
-        driverName: _driverNameController.text.isEmpty
-            ? null
-            : _driverNameController.text,
-        driverContact: _driverContactController.text.isEmpty
-            ? null
-            : _driverContactController.text,
-        photoUrl: _photoUrl,
-        documentUrl: _documentUrl,
-        emergencyContactName: _emergencyNameController.text.isEmpty
-            ? null
-            : _emergencyNameController.text,
-        emergencyContactNumber: _emergencyContactController.text.isEmpty
-            ? null
-            : _emergencyContactController.text,
-        sendNotification: _sendNotification,
-      );
+      try {
+        // Show loading indicator
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Processing...'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
 
-      ref.read(visitorFormProvider.notifier).submitVisitor(visitor);
+        final visitor = Visitor(
+          name: _nameController.text,
+          address: _addressController.text,
+          contactNumber: _contactController.text,
+          email: _emailController.text.isEmpty ? '' : _emailController.text,
+          vehicleNumber: _vehicleController.text,
+          purposeOfVisit: _purposeController.text,
+          numberOfVisitors: 1,
+          whomToMeet: _selectedStaffId ?? '',
+          department: _selectedDepartmentCode ?? '',
+          documentType: _selectedDocumentType ?? '',
+          entryTime: DateTime.now(),
+          cabProvider: _selectedCabProvider,
+          driverName: _driverNameController.text.isEmpty
+              ? null
+              : _driverNameController.text,
+          driverContact: _driverContactController.text.isEmpty
+              ? null
+              : _driverContactController.text,
+          photoUrl: _photoUrl,
+          documentUrl: _documentUrl,
+          emergencyContactName: _emergencyNameController.text.isEmpty
+              ? null
+              : _emergencyNameController.text,
+          emergencyContactNumber: _emergencyContactController.text.isEmpty
+              ? null
+              : _emergencyContactController.text,
+          sendNotification: _sendNotification,
+          type: 'cab',
+        );
 
-      Navigator.push(
-        context,
-        RouteUtils.noAnimationRoute(
-          VisitorSuccessScreen(visitor: visitor),
-        ),
-      );
+        // Save to Firebase
+        await ref.read(firebaseServiceProvider).saveVisitorData(
+          visitor,
+          photoFile: _photoFile,
+          documentFile: _documentFile,
+        );
+
+        if (mounted) {
+          // Navigate to success screen using pushReplacement
+          await Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => VisitorSuccessScreen(
+                visitor: visitor,
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: SelectableText.rich(
+                TextSpan(
+                  text: 'Error saving visitor data: ',
+                  children: [
+                    TextSpan(
+                      text: e.toString(),
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
+              backgroundColor: Colors.white,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 

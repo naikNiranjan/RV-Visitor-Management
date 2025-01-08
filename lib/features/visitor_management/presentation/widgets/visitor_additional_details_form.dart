@@ -9,6 +9,7 @@ import '../../../../core/utils/responsive_utils.dart';
 import 'dart:io';
 import './camera_screen.dart';
 import 'package:file_picker/file_picker.dart';
+import '../providers/firebase_provider.dart';
 
 const int _maxVisitors = 15;
 
@@ -199,35 +200,66 @@ class _VisitorAdditionalDetailsFormState
     );
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final updatedVisitor = widget.visitor.copyWith(
-        email: _emailController.text,
-        emergencyContactName: _emergencyNameController.text.isEmpty
-            ? null
-            : _emergencyNameController.text,
-        emergencyContactNumber: _emergencyContactController.text.isEmpty
-            ? null
-            : _emergencyContactController.text,
-        vehicleNumber:
-            _vehicleController.text.isEmpty ? null : _vehicleController.text,
-        numberOfVisitors: _numberOfVisitors,
-        photoUrl: _photoUrl,
-        documentUrl: _documentUrl,
-        sendNotification: _sendNotification,
-      );
+      try {
+        final updatedVisitor = widget.visitor.copyWith(
+          email: _emailController.text,
+          emergencyContactName: _emergencyNameController.text.isEmpty
+              ? null
+              : _emergencyNameController.text,
+          emergencyContactNumber: _emergencyContactController.text.isEmpty
+              ? null
+              : _emergencyContactController.text,
+          vehicleNumber:
+              _vehicleController.text.isEmpty ? null : _vehicleController.text,
+          numberOfVisitors: _numberOfVisitors,
+          photoUrl: _photoUrl,
+          documentUrl: _documentUrl,
+          sendNotification: _sendNotification,
+        );
 
-      widget.onSubmitted?.call(updatedVisitor);
+        // Save to Firebase
+        await ref.read(firebaseServiceProvider).saveVisitorData(
+          updatedVisitor,
+          photoFile: _photoFile,
+          documentFile: _documentFile,
+        );
 
-      // Navigate to success screen
-      Navigator.pushReplacement(
-        context,
-        RouteUtils.noAnimationRoute(
-          VisitorSuccessScreen(
-            visitor: updatedVisitor,
-          ),
-        ),
-      );
+        widget.onSubmitted?.call(updatedVisitor);
+
+        if (mounted) {
+          // Navigate to success screen
+          Navigator.pushReplacement(
+            context,
+            RouteUtils.noAnimationRoute(
+              VisitorSuccessScreen(
+                visitor: updatedVisitor,
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: SelectableText.rich(
+                TextSpan(
+                  text: 'Error saving visitor data: ',
+                  children: [
+                    TextSpan(
+                      text: e.toString(),
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
+              backgroundColor: Colors.white,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 
