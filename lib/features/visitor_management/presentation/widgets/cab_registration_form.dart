@@ -7,11 +7,12 @@ import '../../../../core/utils/route_utils.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import '../../domain/models/visitor.dart';
 import '../providers/visitor_form_provider.dart';
+import '../providers/firebase_provider.dart';
+import '../screens/quick_checkin_screen.dart';
 import '../screens/visitor_success_screen.dart';
 import 'dart:io';
 import './camera_screen.dart';
 import 'package:file_picker/file_picker.dart';
-import '../providers/firebase_provider.dart';
 
 class CabRegistrationForm extends ConsumerStatefulWidget {
   const CabRegistrationForm({super.key});
@@ -42,6 +43,7 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
   String? _documentUrl;
   String? _selectedDocumentType;
   bool _sendNotification = false;
+  bool _isLoading = false;
 
   final List<String> _cabProviders = [
     'Uber',
@@ -135,6 +137,52 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
   void _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
+        setState(() {
+          _isLoading = true;
+        });
+
+        // Check if visitor is already registered
+        final isRegistered = await ref.read(firebaseServiceProvider)
+            .isVisitorRegistered(_contactController.text);
+
+        if (isRegistered) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+            
+            // Show dialog
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Already Registered'),
+                content: const Text(
+                  'This visitor is already registered. Please use Quick Check-in instead.'
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const QuickCheckInScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text('Go to Quick Check-in'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              ),
+            );
+            return;
+          }
+        }
+
         // Show loading indicator
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -193,6 +241,9 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
         }
       } catch (e) {
         if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error saving visitor data: $e'),

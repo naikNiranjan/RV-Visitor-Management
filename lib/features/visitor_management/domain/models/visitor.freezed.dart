@@ -40,6 +40,8 @@ mixin _$Visitor {
   String? get emergencyContactNumber => throw _privateConstructorUsedError;
   bool get sendNotification => throw _privateConstructorUsedError;
   String get type => throw _privateConstructorUsedError;
+  String? get lastVisitId => throw _privateConstructorUsedError;
+  int? get visitCount => throw _privateConstructorUsedError;
 
   /// Serializes this Visitor to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -75,7 +77,9 @@ abstract class $VisitorCopyWith<$Res> {
       String? emergencyContactName,
       String? emergencyContactNumber,
       bool sendNotification,
-      String type});
+      String type,
+      String? lastVisitId,
+      int? visitCount});
 }
 
 /// @nodoc
@@ -113,6 +117,8 @@ class _$VisitorCopyWithImpl<$Res, $Val extends Visitor>
     Object? emergencyContactNumber = freezed,
     Object? sendNotification = null,
     Object? type = null,
+    Object? lastVisitId = freezed,
+    Object? visitCount = freezed,
   }) {
     return _then(_value.copyWith(
       name: null == name
@@ -195,6 +201,14 @@ class _$VisitorCopyWithImpl<$Res, $Val extends Visitor>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as String,
+      lastVisitId: freezed == lastVisitId
+          ? _value.lastVisitId
+          : lastVisitId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      visitCount: freezed == visitCount
+          ? _value.visitCount
+          : visitCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -226,7 +240,9 @@ abstract class _$$VisitorImplCopyWith<$Res> implements $VisitorCopyWith<$Res> {
       String? emergencyContactName,
       String? emergencyContactNumber,
       bool sendNotification,
-      String type});
+      String type,
+      String? lastVisitId,
+      int? visitCount});
 }
 
 /// @nodoc
@@ -262,6 +278,8 @@ class __$$VisitorImplCopyWithImpl<$Res>
     Object? emergencyContactNumber = freezed,
     Object? sendNotification = null,
     Object? type = null,
+    Object? lastVisitId = freezed,
+    Object? visitCount = freezed,
   }) {
     return _then(_$VisitorImpl(
       name: null == name
@@ -344,6 +362,14 @@ class __$$VisitorImplCopyWithImpl<$Res>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as String,
+      lastVisitId: freezed == lastVisitId
+          ? _value.lastVisitId
+          : lastVisitId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      visitCount: freezed == visitCount
+          ? _value.visitCount
+          : visitCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -371,7 +397,9 @@ class _$VisitorImpl implements _Visitor {
       this.emergencyContactName,
       this.emergencyContactNumber,
       this.sendNotification = false,
-      this.type = 'visitor'});
+      this.type = 'visitor',
+      this.lastVisitId,
+      this.visitCount});
 
   factory _$VisitorImpl.fromJson(Map<String, dynamic> json) =>
       _$$VisitorImplFromJson(json);
@@ -418,10 +446,14 @@ class _$VisitorImpl implements _Visitor {
   @override
   @JsonKey()
   final String type;
+  @override
+  final String? lastVisitId;
+  @override
+  final int? visitCount;
 
   @override
   String toString() {
-    return 'Visitor(name: $name, address: $address, contactNumber: $contactNumber, email: $email, vehicleNumber: $vehicleNumber, purposeOfVisit: $purposeOfVisit, numberOfVisitors: $numberOfVisitors, whomToMeet: $whomToMeet, department: $department, documentType: $documentType, entryTime: $entryTime, photoUrl: $photoUrl, documentUrl: $documentUrl, cabProvider: $cabProvider, driverName: $driverName, driverContact: $driverContact, emergencyContactName: $emergencyContactName, emergencyContactNumber: $emergencyContactNumber, sendNotification: $sendNotification, type: $type)';
+    return 'Visitor(name: $name, address: $address, contactNumber: $contactNumber, email: $email, vehicleNumber: $vehicleNumber, purposeOfVisit: $purposeOfVisit, numberOfVisitors: $numberOfVisitors, whomToMeet: $whomToMeet, department: $department, documentType: $documentType, entryTime: $entryTime, photoUrl: $photoUrl, documentUrl: $documentUrl, cabProvider: $cabProvider, driverName: $driverName, driverContact: $driverContact, emergencyContactName: $emergencyContactName, emergencyContactNumber: $emergencyContactNumber, sendNotification: $sendNotification, type: $type, lastVisitId: $lastVisitId, visitCount: $visitCount)';
   }
 
   @override
@@ -464,7 +496,11 @@ class _$VisitorImpl implements _Visitor {
                 other.emergencyContactNumber == emergencyContactNumber) &&
             (identical(other.sendNotification, sendNotification) ||
                 other.sendNotification == sendNotification) &&
-            (identical(other.type, type) || other.type == type));
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.lastVisitId, lastVisitId) ||
+                other.lastVisitId == lastVisitId) &&
+            (identical(other.visitCount, visitCount) ||
+                other.visitCount == visitCount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -490,7 +526,9 @@ class _$VisitorImpl implements _Visitor {
         emergencyContactName,
         emergencyContactNumber,
         sendNotification,
-        type
+        type,
+        lastVisitId,
+        visitCount
       ]);
 
   /// Create a copy of Visitor
@@ -530,7 +568,9 @@ abstract class _Visitor implements Visitor {
       final String? emergencyContactName,
       final String? emergencyContactNumber,
       final bool sendNotification,
-      final String type}) = _$VisitorImpl;
+      final String type,
+      final String? lastVisitId,
+      final int? visitCount}) = _$VisitorImpl;
 
   factory _Visitor.fromJson(Map<String, dynamic> json) = _$VisitorImpl.fromJson;
 
@@ -574,6 +614,10 @@ abstract class _Visitor implements Visitor {
   bool get sendNotification;
   @override
   String get type;
+  @override
+  String? get lastVisitId;
+  @override
+  int? get visitCount;
 
   /// Create a copy of Visitor
   /// with the given fields replaced by the non-null parameter values.

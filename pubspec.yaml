@@ -20,6 +20,7 @@ version: 1.0.0+1
 
 environment:
   sdk: ^3.6.0
+  flutter: ">=3.16.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -41,9 +42,10 @@ dependencies:
   camerawesome: ^2.1.0
   firebase_core: ^2.24.2
   firebase_auth: ^4.15.3
-  cloud_firestore: ^4.13.6
+  cloud_firestore: ^4.15.5
   file_picker: ^8.1.7
   firebase_storage: ^11.6.0
+  intl: ^0.18.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

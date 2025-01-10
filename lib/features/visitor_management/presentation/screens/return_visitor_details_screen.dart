@@ -42,6 +42,15 @@ class _ReturnVisitorDetailsScreenState
   Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Processing check-in...'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+
         final visitor = Visitor(
           name: widget.visitorData['name'] ?? '',
           address: widget.visitorData['address'] ?? '',
@@ -57,15 +66,6 @@ class _ReturnVisitorDetailsScreenState
           type: 'return',
           sendNotification: _sendNotification,
         );
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Processing check-in...'),
-              duration: Duration(seconds: 1),
-            ),
-          );
-        }
 
         await ref.read(firebaseServiceProvider).saveReturnVisit(visitor);
 

@@ -30,6 +30,8 @@ _$VisitorImpl _$$VisitorImplFromJson(Map<String, dynamic> json) =>
       emergencyContactNumber: json['emergencyContactNumber'] as String?,
       sendNotification: json['sendNotification'] as bool? ?? false,
       type: json['type'] as String? ?? 'visitor',
+      lastVisitId: json['lastVisitId'] as String?,
+      visitCount: (json['visitCount'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$VisitorImplToJson(_$VisitorImpl instance) =>
@@ -54,4 +56,6 @@ Map<String, dynamic> _$$VisitorImplToJson(_$VisitorImpl instance) =>
       'emergencyContactNumber': instance.emergencyContactNumber,
       'sendNotification': instance.sendNotification,
       'type': instance.type,
+      'lastVisitId': instance.lastVisitId,
+      'visitCount': instance.visitCount,
     };

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import '../../domain/models/visitor.dart';
+import '../../domain/models/department_data.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:lottie/lottie.dart';
 import '../../../../core/utils/responsive_utils.dart';
@@ -27,6 +28,17 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
   late Animation<double> _fadeInAnimation;
   late Animation<Offset> _slideAnimation;
 
+  String getHostNameFromEmail(String email) {
+    for (var staffList in departmentStaff.values) {
+      for (var staff in staffList) {
+        if (staff.value == email) {
+          return staff.label;
+        }
+      }
+    }
+    return email;
+  }
+
   String get _visitorQrData {
     final Map<String, dynamic> qrData = {
       'name': widget.visitor.name,
@@ -36,7 +48,8 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
       'vehicleNumber': widget.visitor.vehicleNumber,
       'purposeOfVisit': widget.visitor.purposeOfVisit,
       'numberOfVisitors': widget.visitor.numberOfVisitors,
-      'whomToMeet': widget.visitor.whomToMeet,
+      'whomToMeet': getHostNameFromEmail(widget.visitor.whomToMeet),
+      'whomToMeetEmail': widget.visitor.whomToMeet,
       'department': widget.visitor.department,
       'documentType': widget.visitor.documentType,
       'entryTime': widget.visitor.entryTime?.toIso8601String(),
@@ -227,6 +240,8 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
                                   'Purpose', widget.visitor.purposeOfVisit),
                               DetailItem('Visitors',
                                   widget.visitor.numberOfVisitors.toString()),
+                              DetailItem('Host', getHostNameFromEmail(widget.visitor.whomToMeet)),
+                              DetailItem('Department', widget.visitor.department),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -295,55 +310,34 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
     required IconData icon,
     required List<DetailItem> details,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        side: BorderSide(color: Colors.grey[200]!),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-            ),
-            child: Row(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Icon(
-                  icon,
-                  color: AppTheme.primaryColor,
-                ),
+                Icon(icon, color: AppTheme.primaryColor),
                 const SizedBox(width: 8),
                 Text(
                   title,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
                   ),
                 ),
               ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: details.map((detail) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+            const SizedBox(height: 16),
+            ...details.map((detail) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(
                         width: 100,
@@ -359,17 +353,15 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
                         child: Text(
                           detail.value,
                           style: const TextStyle(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ],
                   ),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
+                )),
+          ],
+        ),
       ),
     );
   }

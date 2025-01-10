@@ -1,1 +1,6 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"rvcevm","appId":"1:521022903787:android:67350c1c4b263cc74975ae","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"rvcevm","configurations":{"android":"1:521022903787:android:67350c1c4b263cc74975ae","ios":"1:521022903787:ios:57b68717bb86b71f4975ae","macos":"1:521022903787:ios:57b68717bb86b71f4975ae","web":"1:521022903787:web:4984a25eb6c3cd414975ae","windows":"1:521022903787:web:9ad10db608699b504975ae"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firebase.indexes.json"
+  }
+}

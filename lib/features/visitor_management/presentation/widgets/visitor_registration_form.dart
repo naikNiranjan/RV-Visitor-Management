@@ -6,6 +6,8 @@ import '../../../../core/utils/route_utils.dart';
 import '../../domain/models/visitor.dart';
 import '../../domain/models/department_data.dart';
 import '../providers/visitor_form_provider.dart';
+import '../providers/firebase_provider.dart';
+import '../screens/quick_checkin_screen.dart';
 import '../widgets/visitor_additional_details_form.dart';
 import '../../../../core/widgets/base_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
@@ -38,6 +40,7 @@ class _VisitorRegistrationFormState
   String? _selectedDocumentType;
   File? _photoFile;
   String? _photoUrl;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -82,42 +85,103 @@ class _VisitorRegistrationFormState
     return null;
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final visitor = Visitor(
-        name: _nameController.text,
-        address: _addressController.text,
-        contactNumber: _contactController.text,
-        email: '',
-        vehicleNumber: null,
-        purposeOfVisit: _purposeController.text,
-        numberOfVisitors: 1,
-        whomToMeet: _selectedStaffId ?? '',
-        department: _selectedDepartmentCode ?? '',
-        documentType: _selectedDocumentType ?? '',
-        entryTime: DateTime.now(),
-      );
+      try {
+        // Show loading indicator
+        setState(() {
+          _isLoading = true;
+        });
 
-      Navigator.push(
-        context,
-        RouteUtils.noAnimationRoute(
-          BaseScreen(
-            title: 'Additional Details',
-            showBackButton: true,
-            body: SingleChildScrollView(
-              child: VisitorAdditionalDetailsForm(
-                visitor: visitor,
-                onSubmitted: (updatedVisitor) {
-                  ref
-                      .read(visitorFormProvider.notifier)
-                      .submitVisitor(updatedVisitor);
-                  widget.onSubmitted?.call(updatedVisitor);
-                },
+        // Check if visitor is already registered
+        final isRegistered = await ref.read(firebaseServiceProvider)
+            .isVisitorRegistered(_contactController.text);
+
+        if (isRegistered) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+            
+            // Show dialog
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Already Registered'),
+                content: const Text(
+                  'This visitor is already registered. Please use Quick Check-in instead.'
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const QuickCheckInScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text('Go to Quick Check-in'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              ),
+            );
+            return;
+          }
+        }
+
+        final visitor = Visitor(
+          name: _nameController.text,
+          address: _addressController.text,
+          contactNumber: _contactController.text,
+          email: '',
+          vehicleNumber: null,
+          purposeOfVisit: _purposeController.text,
+          numberOfVisitors: 1,
+          whomToMeet: _selectedStaffId ?? '',
+          department: _selectedDepartmentCode ?? '',
+          documentType: _selectedDocumentType ?? '',
+          entryTime: DateTime.now(),
+        );
+
+        Navigator.push(
+          context,
+          RouteUtils.noAnimationRoute(
+            BaseScreen(
+              title: 'Additional Details',
+              showBackButton: true,
+              body: SingleChildScrollView(
+                child: VisitorAdditionalDetailsForm(
+                  visitor: visitor,
+                  onSubmitted: (updatedVisitor) {
+                    ref
+                        .read(visitorFormProvider.notifier)
+                        .submitVisitor(updatedVisitor);
+                    widget.onSubmitted?.call(updatedVisitor);
+                  },
+                ),
               ),
             ),
           ),
-        ),
-      );
+        );
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 

@@ -26,6 +26,8 @@ class Visitor with _$Visitor {
     String? emergencyContactNumber,
     @Default(false) bool sendNotification,
     @Default('visitor') String type,
+    String? lastVisitId,
+    int? visitCount,
   }) = _Visitor;
 
   factory Visitor.fromJson(Map<String, dynamic> json) => _$VisitorFromJson(json);
