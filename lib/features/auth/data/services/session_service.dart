@@ -3,32 +3,44 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'session_service.g.dart';
 
+class SessionState {
+  final String? token;
+  final String? userId;
+  final String? role;
+
+  SessionState({this.token, this.userId, this.role});
+}
+
 @riverpod
 class SessionService extends _$SessionService {
-  static const _tokenKey = 'auth_token';
-  static const _userIdKey = 'user_id';
-
-  late final SharedPreferences _prefs;
-
   @override
-  Future<void> build() async {
-    _prefs = await SharedPreferences.getInstance();
+  FutureOr<SessionState?> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final userId = prefs.getString('userId');
+    final role = prefs.getString('role');
+    
+    if (token != null && userId != null && role != null) {
+      return SessionState(token: token, userId: userId, role: role);
+    }
+    return null;
   }
 
   Future<void> saveSession({
     required String token,
     required String userId,
+    required String role,
   }) async {
-    await _prefs.setString(_tokenKey, token);
-    await _prefs.setString(_userIdKey, userId);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+    await prefs.setString('userId', userId);
+    await prefs.setString('role', role);
+    state = AsyncData(SessionState(token: token, userId: userId, role: role));
   }
 
   Future<void> clearSession() async {
-    await _prefs.remove(_tokenKey);
-    await _prefs.remove(_userIdKey);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    state = const AsyncData(null);
   }
-
-  String? getToken() => _prefs.getString(_tokenKey);
-  String? getUserId() => _prefs.getString(_userIdKey);
-  bool get isLoggedIn => getToken() != null;
 } 

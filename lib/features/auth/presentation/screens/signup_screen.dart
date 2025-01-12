@@ -14,6 +14,7 @@ class SignupScreen extends HookConsumerWidget {
     final confirmPasswordController = useTextEditingController();
     final isLoading = useState(false);
     final errorMessage = useState<String?>(null);
+    final selectedRole = useState<String>('Security');
 
     Future<void> handleSignup() async {
       if (emailController.text.isEmpty || 
@@ -35,6 +36,7 @@ class SignupScreen extends HookConsumerWidget {
         await ref.read(authProvider.notifier).createUserWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text,
+          role: selectedRole.value.toLowerCase(),
         );
         
         if (context.mounted) {
@@ -90,6 +92,10 @@ class SignupScreen extends HookConsumerWidget {
                       ),
                       const SizedBox(height: 32),
                       Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(24),
                           child: Column(
@@ -142,8 +148,40 @@ class SignupScreen extends HookConsumerWidget {
                                 onSubmitted: (_) => handleSignup(),
                               ),
                               const SizedBox(height: 24),
+                              DropdownButtonFormField<String>(
+                                value: selectedRole.value,
+                                decoration: InputDecoration(
+                                  labelText: 'Register As',
+                                  prefixIcon: const Icon(Icons.person),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'Security',
+                                    child: Text('Security'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'Host',
+                                    child: Text('Host'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    selectedRole.value = value;
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 24),
                               FilledButton(
                                 onPressed: isLoading.value ? null : handleSignup,
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
                                 child: isLoading.value
                                     ? const SizedBox(
                                         height: 20,
@@ -162,12 +200,22 @@ class SignupScreen extends HookConsumerWidget {
                                         ],
                                       ),
                               ),
+                              const SizedBox(height: 16),
                               TextButton(
                                 onPressed: () => context.pop(),
                                 child: const Text('Already have an account? Login'),
                               ),
                             ],
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        '© 2024 RVCE. All rights reserved.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
                         ),
                       ),
                     ],

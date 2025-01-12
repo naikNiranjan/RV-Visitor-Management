@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'session_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 part 'auth_service.g.dart';
 
@@ -14,6 +15,7 @@ class Auth extends _$Auth {
   Future<UserCredential> signInWithEmailAndPassword({
     required String email,
     required String password,
+    required String role,
   }) async {
     try {
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -21,12 +23,23 @@ class Auth extends _$Auth {
         password: password,
       );
       
-      // Save session
+      // Save user role in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(credential.user!.uid)
+          .set({
+        'role': role,
+        'email': email,
+        'lastLogin': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      
+      // Save session with role
       final token = await credential.user?.getIdToken();
       if (token != null && credential.user != null) {
         await ref.read(sessionServiceProvider.notifier).saveSession(
           token: token,
           userId: credential.user!.uid,
+          role: role,
         );
       }
       
@@ -39,19 +52,33 @@ class Auth extends _$Auth {
   Future<UserCredential> createUserWithEmailAndPassword({
     required String email,
     required String password,
+    required String role,
   }) async {
     try {
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       
-      // Save session
+      // Save user role in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(credential.user!.uid)
+          .set({
+        'role': role,
+        'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastLogin': FieldValue.serverTimestamp(),
+      });
+      
+      // Save session with role
       final token = await credential.user?.getIdToken();
       if (token != null && credential.user != null) {
         await ref.read(sessionServiceProvider.notifier).saveSession(
           token: token,
           userId: credential.user!.uid,
+          role: role,
         );
       }
       

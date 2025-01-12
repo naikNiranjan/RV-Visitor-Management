@@ -32,10 +32,11 @@ class LoginScreen extends HookConsumerWidget {
         await ref.read(authProvider.notifier).signInWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text,
+          role: selectedRole.value.toLowerCase(),
         );
         
         if (context.mounted) {
-          context.go('/');
+          context.go(selectedRole.value.toLowerCase() == 'host' ? '/host' : '/');
         }
       } catch (e) {
         errorMessage.value = e.toString();
@@ -198,8 +199,8 @@ class LoginScreen extends HookConsumerWidget {
                                     child: Text('Security'),
                                   ),
                                   DropdownMenuItem(
-                                    value: 'Admin',
-                                    child: Text('Admin'),
+                                    value: 'Host',
+                                    child: Text('Host'),
                                   ),
                                 ],
                                 onChanged: (value) {
