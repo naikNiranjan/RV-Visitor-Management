@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'session_service.dart';
 
 part 'google_auth_service.g.dart';
 
@@ -12,27 +14,50 @@ class GoogleAuthService extends _$GoogleAuthService {
   @override
   FutureOr<void> build() {}
 
-  Future<UserCredential> signInWithGoogle() async {
+  Future<UserCredential> signInWithGoogle({required String role}) async {
     try {
-      // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
         throw 'Google Sign In was cancelled';
       }
 
-      // Obtain the auth details from the request
+      // Validate RVCE email
+      if (!googleUser.email.endsWith('@rvce.edu.in')) {
+        throw 'Only RVCE email addresses (@rvce.edu.in) are allowed';
+      }
+
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      // Create a new credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase with the Google credential
-      return await _auth.signInWithCredential(credential);
+      final userCredential = await _auth.signInWithCredential(credential);
+      
+      // Save user data in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'role': role,
+        'email': userCredential.user!.email,
+        'lastLogin': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      
+      // Save session with role
+      final token = await userCredential.user?.getIdToken();
+      if (token != null && userCredential.user != null) {
+        await ref.read(sessionServiceProvider.notifier).saveSession(
+          token: token,
+          userId: userCredential.user!.uid,
+          role: role,
+        );
+      }
+
+      return userCredential;
     } catch (e) {
       throw _handleGoogleSignInError(e);
     }

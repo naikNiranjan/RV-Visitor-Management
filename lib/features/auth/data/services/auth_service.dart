@@ -53,6 +53,7 @@ class Auth extends _$Auth {
     required String email,
     required String password,
     required String role,
+    required String username,
   }) async {
     try {
       final credential = await FirebaseAuth.instance
@@ -61,13 +62,14 @@ class Auth extends _$Auth {
         password: password,
       );
       
-      // Save user role in Firestore
+      // Save user data in Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(credential.user!.uid)
           .set({
         'role': role,
         'email': email,
+        'username': username,
         'createdAt': FieldValue.serverTimestamp(),
         'lastLogin': FieldValue.serverTimestamp(),
       });
@@ -96,17 +98,27 @@ class Auth extends _$Auth {
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
-        return 'No user found with this email.';
+        return 'No user found with this email';
       case 'wrong-password':
-        return 'Wrong password provided.';
-      case 'email-already-in-use':
-        return 'Email is already registered.';
+        return 'Incorrect password';
       case 'invalid-email':
-        return 'Invalid email address.';
+        return 'Please enter a valid RVCE email address';
+      case 'email-already-in-use':
+        return 'This email is already registered';
       case 'weak-password':
-        return 'Password is too weak.';
+        return '''Password is too weak. Password must:
+• Be at least 8 characters
+• Include uppercase and lowercase letters
+• Include numbers
+• Include special characters''';
+      case 'user-disabled':
+        return 'This account has been disabled';
+      case 'too-many-requests':
+        return 'Too many failed attempts. Please try again later';
+      case 'operation-not-allowed':
+        return 'Email/password sign in is not enabled';
       default:
-        return 'An error occurred. Please try again.';
+        return 'Authentication failed: ${e.message}';
     }
   }
 } 

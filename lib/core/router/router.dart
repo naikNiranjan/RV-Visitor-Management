@@ -1,11 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../features/auth/data/services/auth_service.dart';
 import '../../features/auth/data/services/session_service.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
-import '../../features/visitor_management/presentation/screens/home_screen.dart';
+import '../../features/visitor_management/presentation/screens/main_screen.dart';
 import '../../features/visitor_management/presentation/screens/host_home_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -25,7 +24,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (isLoggedIn && isAuthRoute) {
         final userRole = sessionState.valueOrNull?.role?.toLowerCase();
-        return userRole == 'host' ? '/host' : '/';
+        return userRole == 'security' ? '/register' : '/host';
       }
 
       return null;
@@ -40,8 +39,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SignupScreen(),
       ),
       GoRoute(
-        path: '/',
-        builder: (context, state) => const VisitorManagementScreen(),
+        path: '/register',
+        builder: (context, state) => const MainScreen(),
       ),
       GoRoute(
         path: '/host',
