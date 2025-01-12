@@ -49,5 +49,14 @@
 	<string>Camera access is required for taking visitor photos</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access is required for recording videos</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.YOUR-CLIENT-ID</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

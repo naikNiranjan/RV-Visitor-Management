@@ -5,7 +5,6 @@ import '../../domain/models/department_data.dart';
 import '../screens/quick_checkin_success_screen.dart';
 import '../../../../core/utils/route_utils.dart';
 import '../../../../core/widgets/base_screen.dart';
-import '../../data/services/firebase_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/firebase_provider.dart';
 

@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:rvvm/core/theme/app_colors.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/services/google_auth_service.dart';
+import '../widgets/success_animation.dart';
+
 
 class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
@@ -32,6 +36,32 @@ class LoginScreen extends HookConsumerWidget {
         
         if (context.mounted) {
           context.go('/');
+        }
+      } catch (e) {
+        errorMessage.value = e.toString();
+      } finally {
+        isLoading.value = false;
+      }
+    }
+
+    Future<void> handleGoogleSignIn() async {
+      try {
+        isLoading.value = true;
+        errorMessage.value = null;
+        
+        await ref.read(googleAuthServiceProvider.notifier).signInWithGoogle();
+        
+        if (context.mounted) {
+          Navigator.of(context).push(
+            PageRouteBuilder(
+              opaque: false,
+              pageBuilder: (context, _, __) => SuccessAnimation(
+                onAnimationComplete: () {
+                  context.go('/');
+                },
+              ),
+            ),
+          );
         }
       } catch (e) {
         errorMessage.value = e.toString();
@@ -218,14 +248,13 @@ class LoginScreen extends HookConsumerWidget {
                               ),
                               const SizedBox(height: 24),
                               OutlinedButton(
-                                onPressed: () {
-                                  // TODO: Implement Google Sign In
-                                },
+                                onPressed: isLoading.value ? null : handleGoogleSignIn,
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
+                                  backgroundColor: Colors.white,
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -235,7 +264,14 @@ class LoginScreen extends HookConsumerWidget {
                                       height: 24,
                                     ),
                                     const SizedBox(width: 8),
-                                    const Text('Sign in with Google'),
+                                    Text(
+                                      'Sign in with Google',
+                                      style: TextStyle(
+                                        color: isLoading.value 
+                                          ? Colors.grey 
+                                          : AppColors.primaryTextColor,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
