@@ -127,5 +127,40 @@ final visitHistoryProvider = AutoDisposeStreamProvider<List<Visitor>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef VisitHistoryRef = AutoDisposeStreamProviderRef<List<Visitor>>;
+String _$currentHostHash() => r'60e765694308b3f03b3ce410e6fa28692356f5ba';
+
+/// See also [currentHost].
+@ProviderFor(currentHost)
+final currentHostProvider = AutoDisposeStreamProvider<Host?>.internal(
+  currentHost,
+  name: r'currentHostProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$currentHostHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CurrentHostRef = AutoDisposeStreamProviderRef<Host?>;
+String _$hostNotificationsHash() => r'0ad8b2cc682db9942acdbea53e037ed5c685eba1';
+
+/// See also [hostNotifications].
+@ProviderFor(hostNotifications)
+final hostNotificationsProvider =
+    AutoDisposeStreamProvider<List<Map<String, dynamic>>>.internal(
+  hostNotifications,
+  name: r'hostNotificationsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$hostNotificationsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef HostNotificationsRef
+    = AutoDisposeStreamProviderRef<List<Map<String, dynamic>>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

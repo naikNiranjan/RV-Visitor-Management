@@ -94,7 +94,8 @@ class _VisitorRegistrationFormState
         });
 
         // Check if visitor is already registered
-        final isRegistered = await ref.read(firebaseServiceProvider)
+        final isRegistered = await ref
+            .read(firebaseServiceProvider)
             .isVisitorRegistered(_contactController.text);
 
         if (isRegistered) {
@@ -102,15 +103,14 @@ class _VisitorRegistrationFormState
             setState(() {
               _isLoading = false;
             });
-            
+
             // Show dialog
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
                 title: const Text('Already Registered'),
                 content: const Text(
-                  'This visitor is already registered. Please use Quick Check-in instead.'
-                ),
+                    'This visitor is already registered. Please use Quick Check-in instead.'),
                 actions: [
                   TextButton(
                     onPressed: () {

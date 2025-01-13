@@ -9,6 +9,7 @@ import '../../../../core/utils/responsive_utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'dart:typed_data';
+import '../../../../core/utils/navigation_utils.dart';
 
 class VisitorSuccessScreen extends StatefulWidget {
   final Visitor visitor;
@@ -106,8 +107,9 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
 
   Future<void> _updateVisitorStatus() async {
     try {
-      final String visitorId = widget.visitor.entryTime!.millisecondsSinceEpoch.toString();
-      
+      final String visitorId =
+          widget.visitor.entryTime!.millisecondsSinceEpoch.toString();
+
       // Create update data
       final Map<String, dynamic> updateData = {
         'status': 'checked_in',
@@ -120,7 +122,6 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
           .collection('visitors')
           .doc(visitorId)
           .update(updateData);
-
     } catch (e) {
       print('Error updating visitor status: $e'); // For debugging
       if (mounted) {
@@ -240,8 +241,12 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
                                   'Purpose', widget.visitor.purposeOfVisit),
                               DetailItem('Visitors',
                                   widget.visitor.numberOfVisitors.toString()),
-                              DetailItem('Host', getHostNameFromEmail(widget.visitor.whomToMeet)),
-                              DetailItem('Department', widget.visitor.department),
+                              DetailItem(
+                                  'Host',
+                                  getHostNameFromEmail(
+                                      widget.visitor.whomToMeet)),
+                              DetailItem(
+                                  'Department', widget.visitor.department),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -269,12 +274,8 @@ class _VisitorSuccessScreenState extends State<VisitorSuccessScreen>
                             width: double.infinity,
                             height: 54,
                             child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.of(context).pushNamedAndRemoveUntil(
-                                  '/',
-                                  (route) => false,
-                                );
-                              },
+                              onPressed: () =>
+                                  NavigationUtils.navigateToHome(context),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primaryColor,
                                 foregroundColor: Colors.white,

@@ -9,6 +9,7 @@ class DashboardCard extends StatelessWidget {
   final TextStyle? titleStyle;
   final TextStyle? subtitleStyle;
   final AsyncValue<int>? count;
+  final Color color;
 
   const DashboardCard({
     super.key,
@@ -19,6 +20,7 @@ class DashboardCard extends StatelessWidget {
     this.titleStyle,
     this.subtitleStyle,
     this.count,
+    required this.color,
   });
 
   @override
@@ -28,12 +30,19 @@ class DashboardCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
+        child: Container(
           padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 2,
+            ),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 32, color: Theme.of(context).primaryColor),
+              Icon(icon, size: 32, color: color),
               const SizedBox(height: 12),
               Text(title, style: titleStyle),
               const SizedBox(height: 4),
@@ -43,7 +52,10 @@ class DashboardCard extends StatelessWidget {
                 count!.when(
                   data: (value) => Text(
                     value.toString(),
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   loading: () => const SizedBox(
                     height: 20,
@@ -62,4 +74,4 @@ class DashboardCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

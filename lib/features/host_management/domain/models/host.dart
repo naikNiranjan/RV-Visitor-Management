@@ -30,9 +30,15 @@ class Host with _$Host {
     return Host.fromJson({
       ...data,
       'id': doc.id,
-      'createdAt': (data['createdAt'] as Timestamp?)?.toDate(),
-      'updatedAt': (data['updatedAt'] as Timestamp?)?.toDate(),
-      'lastLogin': (data['lastLogin'] as Timestamp?)?.toDate(),
+      'createdAt': data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate().toIso8601String()
+          : null,
+      'updatedAt': data['updatedAt'] != null
+          ? (data['updatedAt'] as Timestamp).toDate().toIso8601String()
+          : null,
+      'lastLogin': data['lastLogin'] != null
+          ? (data['lastLogin'] as Timestamp).toDate().toIso8601String()
+          : null,
     });
   }
-} 
+}

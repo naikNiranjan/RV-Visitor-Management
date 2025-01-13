@@ -74,7 +74,6 @@ class HostService {
 
       await batch.commit();
       print('Host registration completed successfully');
-
     } catch (e) {
       print('Error registering host: $e');
       throw Exception('Failed to register host: $e');
@@ -152,27 +151,27 @@ class HostService {
   Future<void> approveVisitor(Visitor visitor) async {
     try {
       final batch = _firestore.batch();
-      
+
       // Move from pending to approved
       final pendingRef = _firestore
           .collection('hosts')
           .doc(visitor.email)
           .collection('pending_approvals')
           .doc(visitor.id);
-          
+
       final approvedRef = _firestore
           .collection('hosts')
           .doc(visitor.email)
           .collection('approved_visitors')
           .doc(visitor.id);
-          
+
       batch.delete(pendingRef);
       batch.set(approvedRef, {
         ...visitor.toJson(),
         'status': 'approved',
         'approvedAt': FieldValue.serverTimestamp(),
       });
-      
+
       await batch.commit();
     } catch (e) {
       print('Error approving visitor: $e');
@@ -183,27 +182,27 @@ class HostService {
   Future<void> rejectVisitor(Visitor visitor) async {
     try {
       final batch = _firestore.batch();
-      
+
       // Move from pending to rejected
       final pendingRef = _firestore
           .collection('hosts')
           .doc(visitor.email)
           .collection('pending_approvals')
           .doc(visitor.id);
-          
+
       final rejectedRef = _firestore
           .collection('hosts')
           .doc(visitor.email)
           .collection('rejected_visitors')
           .doc(visitor.id);
-          
+
       batch.delete(pendingRef);
       batch.set(rejectedRef, {
         ...visitor.toJson(),
         'status': 'rejected',
         'rejectedAt': FieldValue.serverTimestamp(),
       });
-      
+
       await batch.commit();
     } catch (e) {
       print('Error rejecting visitor: $e');
@@ -220,4 +219,12 @@ class HostService {
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
-} 
+
+  Stream<Host?> getHostStream(String email) {
+    return _firestore
+        .collection('hosts')
+        .doc(email)
+        .snapshots()
+        .map((doc) => doc.exists ? Host.fromFirestore(doc) : null);
+  }
+}
