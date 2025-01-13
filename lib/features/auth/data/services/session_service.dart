@@ -3,14 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'session_service.g.dart';
 
-class SessionState {
-  final String? token;
-  final String? userId;
-  final String? role;
-
-  SessionState({this.token, this.userId, this.role});
-}
-
 @riverpod
 class SessionService extends _$SessionService {
   @override
@@ -43,4 +35,12 @@ class SessionService extends _$SessionService {
     await prefs.clear();
     state = const AsyncData(null);
   }
+}
+
+class SessionState {
+  final String? token;
+  final String? userId;
+  final String? role;
+
+  SessionState({this.token, this.userId, this.role});
 } 

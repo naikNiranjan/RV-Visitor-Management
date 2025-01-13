@@ -3,7 +3,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:rvvm/core/theme/app_colors.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/services/google_auth_service.dart';
 import '../widgets/success_animation.dart';

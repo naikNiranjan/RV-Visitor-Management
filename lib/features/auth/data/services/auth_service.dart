@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'session_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../host_management/data/services/host_service.dart';
+import 'session_service.dart';
 
 part 'auth_service.g.dart';
 
@@ -12,28 +13,46 @@ class Auth extends _$Auth {
     return FirebaseAuth.instance.authStateChanges();
   }
 
+  User? get currentUser => FirebaseAuth.instance.currentUser;
+
   Future<UserCredential> signInWithEmailAndPassword({
     required String email,
     required String password,
     required String role,
+    String? username,
   }) async {
     try {
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
-      // Save user role in Firestore
+
+      // Save user data in Firestore
+      final userData = {
+        'email': email,
+        'role': role,
+        'username': username,
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastLogin': FieldValue.serverTimestamp(),
+      };
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(credential.user!.uid)
-          .set({
-        'role': role,
-        'email': email,
-        'lastLogin': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      
-      // Save session with role
+          .set(userData, SetOptions(merge: true));
+
+      // If role is host, also register in hosts collection
+      if (role.toLowerCase() == 'host') {
+        final hostService = HostService();
+        await hostService.registerHost(
+          email: email,
+          name: username ?? 'Unknown',
+          department: '', // You may want to collect this during registration
+          contactNumber: '', // You may want to collect this during registration
+        );
+      }
+
+      // Save session
       final token = await credential.user?.getIdToken();
       if (token != null && credential.user != null) {
         await ref.read(sessionServiceProvider.notifier).saveSession(
@@ -42,7 +61,7 @@ class Auth extends _$Auth {
           role: role,
         );
       }
-      
+
       return credential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
@@ -61,19 +80,32 @@ class Auth extends _$Auth {
         email: email,
         password: password,
       );
-      
+
       // Save user data in Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(credential.user!.uid)
-          .set({
-        'role': role,
+      final userData = {
         'email': email,
+        'role': role,
         'username': username,
         'createdAt': FieldValue.serverTimestamp(),
         'lastLogin': FieldValue.serverTimestamp(),
-      });
-      
+      };
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(credential.user!.uid)
+          .set(userData);
+
+      // If role is host, register in hosts collection
+      if (role.toLowerCase() == 'host') {
+        final hostService = HostService();
+        await hostService.registerHost(
+          email: email,
+          name: username,
+          department: email.split('@')[0].split('.').first, // Temporary department from email
+          contactNumber: '', // You'll need to collect this during registration
+        );
+      }
+
       // Save session with role
       final token = await credential.user?.getIdToken();
       if (token != null && credential.user != null) {
@@ -83,7 +115,7 @@ class Auth extends _$Auth {
           role: role,
         );
       }
-      
+
       return credential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
@@ -92,7 +124,8 @@ class Auth extends _$Auth {
 
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
-    await ref.read(sessionServiceProvider.notifier).clearSession();
+    // Optionally clear session if needed
+    // await ref.read(sessionServiceProvider.notifier).clearSession();
   }
 
   String _handleAuthException(FirebaseAuthException e) {
@@ -120,5 +153,10 @@ class Auth extends _$Auth {
       default:
         return 'Authentication failed: ${e.message}';
     }
+  }
+
+  Future<Map<String, dynamic>?> fetchUserData(String uid) async {
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    return userDoc.data();
   }
 } 

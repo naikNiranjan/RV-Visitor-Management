@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../host_management/data/services/host_service.dart';
 import 'session_service.dart';
 
 part 'google_auth_service.g.dart';
@@ -37,17 +38,31 @@ class GoogleAuthService extends _$GoogleAuthService {
 
       final userCredential = await _auth.signInWithCredential(credential);
       
-      // Save user data in Firestore
+      final userData = {
+        'role': role,
+        'email': userCredential.user!.email,
+        'username': userCredential.user!.displayName,
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastLogin': FieldValue.serverTimestamp(),
+      };
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
-          .set({
-        'role': role,
-        'email': userCredential.user!.email,
-        'lastLogin': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      
-      // Save session with role
+          .set(userData, SetOptions(merge: true));
+
+      // If role is host, register in hosts collection
+      if (role.toLowerCase() == 'host') {
+        final hostService = HostService();
+        await hostService.registerHost(
+          email: userCredential.user!.email!,
+          name: userCredential.user!.displayName ?? 'Unknown',
+          department: userCredential.user!.email!.split('@')[0].split('.').first,
+          contactNumber: '',
+        );
+      }
+
+      // Save session
       final token = await userCredential.user?.getIdToken();
       if (token != null && userCredential.user != null) {
         await ref.read(sessionServiceProvider.notifier).saveSession(
