@@ -120,6 +120,7 @@ flutter:
     - assets/images/app_icon.png
     - assets/images/google_logo.png
     - assets/animations/success.json
+    - assets/images/default_profile.png
 
 flutter_launcher_icons:
   android: true
