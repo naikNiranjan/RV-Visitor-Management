@@ -96,9 +96,12 @@ class LoginScreen extends HookConsumerWidget {
         if (context.mounted) {
           // Navigate based on role
           if (isSecurityLogin.value) {
+            // Security role - go to security dashboard
             context.go('/security');
           } else {
-            context.go('/host');
+            // Host role - go to host dashboard
+            context
+                .go('/host/dashboard'); // Update this path based on your routes
           }
         }
       } on FirebaseAuthException catch (e) {
@@ -138,7 +141,8 @@ class LoginScreen extends HookConsumerWidget {
             PageRouteBuilder(
               opaque: false,
               pageBuilder: (context, _, __) => SuccessAnimation(
-                onAnimationComplete: () => context.go('/host'),
+                onAnimationComplete: () =>
+                    context.go('/host/dashboard'), // Update this path
               ),
             ),
           );
