@@ -77,4 +77,4 @@ class PendingApprovalsScreen extends HookConsumerWidget {
       print('Error rejecting visitor: $e');
     }
   }
-} 
+}

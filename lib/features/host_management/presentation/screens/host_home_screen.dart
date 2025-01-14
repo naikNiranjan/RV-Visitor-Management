@@ -64,13 +64,7 @@ class HostDashboard extends HookConsumerWidget {
                             Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
-                      ),
-                      Text(
-                        host.department,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Colors.grey[600],
-                            ),
-                      ),
+                      )
                     ],
                   ),
                 ),

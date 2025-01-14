@@ -86,7 +86,7 @@ class LoginScreen extends HookConsumerWidget {
           );
         }
 
-        // Proceed with authentication
+        // Simple authentication based on login screen type
         await ref.read(authProvider.notifier).signInWithEmailAndPassword(
               email: email,
               password: passwordController.text,
@@ -94,14 +94,13 @@ class LoginScreen extends HookConsumerWidget {
             );
 
         if (context.mounted) {
-          // Navigate based on role
+          // Navigate based on which login screen we're on
           if (isSecurityLogin.value) {
-            // Security role - go to security dashboard
-            context.go('/security');
+            // If logging in through security screen, always go to main screen
+            context.go('/register');
           } else {
-            // Host role - go to host dashboard
-            context
-                .go('/host/dashboard'); // Update this path based on your routes
+            // If logging in through host screen, always go to host dashboard
+            context.go('/host');
           }
         }
       } on FirebaseAuthException catch (e) {
@@ -114,11 +113,6 @@ class LoginScreen extends HookConsumerWidget {
     }
 
     Future<void> handleGoogleSignIn() async {
-      if (isSecurityLogin.value) {
-        errorMessage.value = 'Security personnel cannot use Google Sign-In';
-        return;
-      }
-
       try {
         isLoading.value = true;
         errorMessage.value = null;
@@ -134,15 +128,14 @@ class LoginScreen extends HookConsumerWidget {
 
         final userCredential = await ref
             .read(googleAuthServiceProvider.notifier)
-            .signInWithGoogle(role: 'host');
+            .signInWithGoogle(role: 'Host');
 
         if (context.mounted) {
           Navigator.of(context).push(
             PageRouteBuilder(
               opaque: false,
               pageBuilder: (context, _, __) => SuccessAnimation(
-                onAnimationComplete: () =>
-                    context.go('/host/dashboard'), // Update this path
+                onAnimationComplete: () => context.go('/host'),
               ),
             ),
           );

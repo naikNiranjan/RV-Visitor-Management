@@ -1,5 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../features/auth/data/services/auth_service.dart';
 import '../../features/auth/data/services/session_service.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -20,20 +22,33 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/login',
     redirect: (context, state) {
       final isLoggedIn = authState.valueOrNull != null;
-      final isAuthRoute = state.matchedLocation == '/login' || 
-                         state.matchedLocation == '/signup';
+      final isAuthRoute = state.matchedLocation == '/login' ||
+          state.matchedLocation == '/signup';
 
+      // Handle loading state
+      if (sessionState.isLoading || authState.isLoading) {
+        return null;
+      }
+
+      // If not logged in and trying to access protected route, redirect to login
       if (!isLoggedIn && !isAuthRoute) {
         return '/login';
       }
 
+      // If logged in and on auth route, redirect based on role
       if (isLoggedIn && isAuthRoute) {
         final userRole = sessionState.valueOrNull?.role?.toLowerCase();
-        return userRole == 'security' ? '/register' : '/host';
+        if (userRole == 'security') {
+          return '/register';
+        }
+        return '/host';
       }
 
       return null;
     },
+    refreshListenable: GoRouterRefreshStream(
+      ref.read(authProvider.notifier).stream,
+    ),
     routes: [
       GoRoute(
         path: '/login',
@@ -78,4 +93,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-}); 
+});
+
+// Update the refresh stream implementation
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.listen(
+      (_) => notifyListeners(),
+    );
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}

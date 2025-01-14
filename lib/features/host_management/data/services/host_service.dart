@@ -143,7 +143,7 @@ class HostService {
     return _firestore
         .collection('hosts')
         .doc(email)
-        .collection('visit_history')
+        .collection('visitor_history')
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
   }
@@ -226,5 +226,47 @@ class HostService {
         .doc(email)
         .snapshots()
         .map((doc) => doc.exists ? Host.fromFirestore(doc) : null);
+  }
+
+  Stream<List<Map<String, dynamic>>> getHostVisitorHistory(String hostEmail) {
+    return _firestore
+        .collection('hosts')
+        .doc(hostEmail)
+        .collection('visitor_history')
+        .orderBy('visitTime', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      print('Fetching ${snapshot.docs.length} visitor history records');
+      List<Map<String, dynamic>> visits = [];
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        // Fetch complete visitor data from visitors collection
+        final visitorDoc = await _firestore
+            .collection('visitors')
+            .doc(data['visitorId'])
+            .get();
+
+        final visitData = {
+          ...data,
+          ...visitorDoc.data() ?? {},
+          'id': doc.id,
+          'visitId': data['visitId'],
+          'visitTime': data['visitTime']?.toDate(),
+          'createdAt': data['createdAt']?.toDate(),
+        };
+
+        // Also fetch visit-specific data from visits collection
+        final visitDoc =
+            await _firestore.collection('visits').doc(data['visitId']).get();
+
+        if (visitDoc.exists) {
+          visitData.addAll(visitDoc.data() ?? {});
+        }
+
+        visits.add(visitData);
+      }
+      return visits;
+    });
   }
 }

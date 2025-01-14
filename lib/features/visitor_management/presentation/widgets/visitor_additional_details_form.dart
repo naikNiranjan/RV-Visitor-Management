@@ -41,6 +41,7 @@ class _VisitorAdditionalDetailsFormState
   bool _sendNotification = false;
   File? _photoFile;
   File? _documentFile;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -203,6 +204,11 @@ class _VisitorAdditionalDetailsFormState
   void _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
+        // Show loading indicator
+        setState(() {
+          _isLoading = true;
+        });
+
         final updatedVisitor = widget.visitor.copyWith(
           email: _emailController.text,
           emergencyContactName: _emergencyNameController.text.isEmpty
@@ -219,12 +225,13 @@ class _VisitorAdditionalDetailsFormState
           sendNotification: _sendNotification,
         );
 
-        // Save to Firebase
+        // Skip registration check since this is additional details for an already validated visitor
         await ref.read(firebaseServiceProvider).saveVisitorData(
-          updatedVisitor,
-          photoFile: _photoFile,
-          documentFile: _documentFile,
-        );
+              updatedVisitor,
+              photoFile: _photoFile,
+              documentFile: _documentFile,
+              skipRegistrationCheck: true,
+            );
 
         widget.onSubmitted?.call(updatedVisitor);
 
@@ -241,6 +248,9 @@ class _VisitorAdditionalDetailsFormState
         }
       } catch (e) {
         if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: SelectableText.rich(
@@ -578,7 +588,7 @@ class _VisitorAdditionalDetailsFormState
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: _submitForm,
+                      onPressed: _isLoading ? null : _submitForm,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
@@ -587,13 +597,22 @@ class _VisitorAdditionalDetailsFormState
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Submit',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Submit',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
                 ),

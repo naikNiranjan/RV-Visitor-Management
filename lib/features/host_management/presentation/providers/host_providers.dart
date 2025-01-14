@@ -31,11 +31,22 @@ Stream<int> approvedVisitorsCount(ApprovedVisitorsCountRef ref) {
 
 @riverpod
 Stream<int> visitHistoryCount(VisitHistoryCountRef ref) {
-  final hostService = ref.watch(hostServiceProvider);
-  final user = ref.watch(authProvider).value;
-  if (user == null) return Stream.value(0);
+  final currentHost = ref.watch(currentHostProvider);
 
-  return hostService.getVisitHistoryCount(user.email!);
+  return currentHost.when(
+    data: (host) {
+      if (host == null) return Stream.value(0);
+
+      // Watch the visitor history to get real-time count
+      return ref.watch(hostVisitorHistoryProvider).when(
+            data: (visits) => Stream.value(visits.length),
+            loading: () => Stream.value(0),
+            error: (_, __) => Stream.value(0),
+          );
+    },
+    loading: () => Stream.value(0),
+    error: (_, __) => Stream.value(0),
+  );
 }
 
 @riverpod
@@ -94,3 +105,16 @@ Stream<List<Map<String, dynamic>>> hostNotifications(HostNotificationsRef ref) {
 
   return hostService.getHostNotifications(user.email!);
 }
+
+final hostVisitorHistoryProvider =
+    StreamProvider<List<Map<String, dynamic>>>((ref) {
+  final currentHost = ref.watch(currentHostProvider);
+  return currentHost.when(
+    data: (host) {
+      if (host == null) return Stream.value([]);
+      return ref.read(hostServiceProvider).getHostVisitorHistory(host.email);
+    },
+    loading: () => Stream.value([]),
+    error: (_, __) => Stream.value([]),
+  );
+});

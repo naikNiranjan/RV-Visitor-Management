@@ -37,7 +37,7 @@ class GoogleAuthService extends _$GoogleAuthService {
       );
 
       final userCredential = await _auth.signInWithCredential(credential);
-      
+
       final userData = {
         'role': role,
         'email': userCredential.user!.email,
@@ -57,7 +57,8 @@ class GoogleAuthService extends _$GoogleAuthService {
         await hostService.registerHost(
           email: userCredential.user!.email!,
           name: userCredential.user!.displayName ?? 'Unknown',
-          department: userCredential.user!.email!.split('@')[0].split('.').first,
+          department:
+              userCredential.user!.email!.split('@')[0].split('.').first,
           contactNumber: '',
         );
       }
@@ -66,10 +67,10 @@ class GoogleAuthService extends _$GoogleAuthService {
       final token = await userCredential.user?.getIdToken();
       if (token != null && userCredential.user != null) {
         await ref.read(sessionServiceProvider.notifier).saveSession(
-          token: token,
-          userId: userCredential.user!.uid,
-          role: role,
-        );
+              token: token,
+              userId: userCredential.user!.uid,
+              role: role,
+            );
       }
 
       return userCredential;
@@ -98,4 +99,4 @@ class GoogleAuthService extends _$GoogleAuthService {
     }
     return error.toString();
   }
-} 
+}

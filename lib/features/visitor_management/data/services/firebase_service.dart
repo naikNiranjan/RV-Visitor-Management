@@ -120,13 +120,16 @@ class FirebaseService {
     Visitor visitor, {
     File? photoFile,
     File? documentFile,
+    bool skipRegistrationCheck = false,
   }) async {
     try {
-      // Check if visitor already exists
-      final isRegistered = await isVisitorRegistered(visitor.contactNumber);
-      if (isRegistered) {
-        throw Exception(
-            'Visitor already registered. Please use Quick Check-in.');
+      // Check if visitor is already registered only if not skipping the check
+      if (!skipRegistrationCheck) {
+        final isRegistered = await isVisitorRegistered(visitor.contactNumber);
+        if (isRegistered) {
+          throw Exception(
+              'Visitor already registered. Please use Quick Check-in.');
+        }
       }
 
       final String visitorId =
@@ -356,11 +359,42 @@ class FirebaseService {
         if (hostDoc.exists) {
           final currentCount = hostDoc.data()?['numberOfVisitors'] as int? ?? 0;
           transaction.update(hostRef, {
-            'numberOfVisitors': currentCount + 1,
+            'numberOfVisitors': (currentCount ?? 0) + 1,
             'updatedAt': FieldValue.serverTimestamp(),
+            'lastVisitor': visitorData['name'],
+            'lastVisitTime': FieldValue.serverTimestamp(),
           });
         }
       });
+
+      // After saving to visits collection, add visitor to host's collection
+      final Map<String, dynamic> hostVisitorData = {
+        'visitId': visitorId,
+        'visitorId': visitor.contactNumber,
+        'name': visitor.name,
+        'contactNumber': visitor.contactNumber,
+        'email': visitor.email,
+        'purposeOfVisit': visitor.purposeOfVisit,
+        'numberOfVisitors': visitor.numberOfVisitors,
+        'department': visitor.department,
+        'entryTime': visitor.entryTime?.toIso8601String(),
+        'exitTime': null,
+        'type': visitor.type,
+        'status': 'checked_in',
+        'documentType': visitor.documentType,
+        'hasDocument': documentFile != null,
+        'hasPhoto': photoFile != null,
+        'vehicleNumber': visitor.vehicleNumber,
+        ...(visitor.type == 'cab'
+            ? {
+                'cabProvider': visitor.cabProvider,
+                'driverName': visitor.driverName,
+                'driverContact': visitor.driverContact,
+              }
+            : {}),
+      };
+
+      await addVisitorToHost(visitor.whomToMeet, hostVisitorData);
 
       print('Visitor data saved successfully with ID: $visitorId');
     } catch (e) {
@@ -486,6 +520,24 @@ class FirebaseService {
           });
         }
       });
+
+      // After saving to visits collection, add visitor to host's collection
+      final Map<String, dynamic> hostVisitorData = {
+        'visitId': visitId,
+        'visitorId': visitor.contactNumber,
+        'name': visitor.name,
+        'contactNumber': visitor.contactNumber,
+        'email': visitor.email,
+        'purposeOfVisit': visitor.purposeOfVisit,
+        'numberOfVisitors': visitor.numberOfVisitors,
+        'department': visitor.department,
+        'entryTime': visitor.entryTime?.toIso8601String(),
+        'exitTime': null,
+        'type': 'quick_checkin',
+        'status': 'checked_in',
+      };
+
+      await addVisitorToHost(visitor.whomToMeet, hostVisitorData);
 
       print('Quick check-in saved successfully with ID: $visitId');
     } catch (e) {
@@ -657,6 +709,60 @@ class FirebaseService {
     } catch (e) {
       print('Error checking out visitor: $e');
       throw Exception('Failed to checkout visitor: $e');
+    }
+  }
+
+  Future<void> addVisitorToHost(
+      String hostEmail, Map<String, dynamic> visitorData) async {
+    try {
+      final hostRef = _firestore.collection('hosts').doc(hostEmail);
+      final visitorHistoryRef =
+          hostRef.collection('visitor_history').doc(visitorData['visitId']);
+
+      await _firestore.runTransaction((transaction) async {
+        final hostDoc = await transaction.get(hostRef);
+
+        // Get current visit count
+        final visitorHistorySnapshot = await _firestore
+            .collection('hosts')
+            .doc(hostEmail)
+            .collection('visitor_history')
+            .count()
+            .get();
+
+        final currentCount = visitorHistorySnapshot.count;
+
+        if (!hostDoc.exists) {
+          transaction.set(hostRef, {
+            'numberOfVisitors': 0,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        // Store visitor history data
+        transaction.set(visitorHistoryRef, {
+          'visitId': visitorData['visitId'],
+          'visitorId': visitorData['visitorId'],
+          'visitTime': FieldValue.serverTimestamp(),
+          'status': visitorData['status'],
+          'type': visitorData['type'],
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Update host stats with accurate count
+        transaction.update(hostRef, {
+          'numberOfVisitors': (currentCount ?? 0) + 1,
+          'updatedAt': FieldValue.serverTimestamp(),
+          'lastVisitor': visitorData['name'],
+          'lastVisitTime': FieldValue.serverTimestamp(),
+        });
+      });
+
+      print('Visitor history added to host collection successfully');
+    } catch (e) {
+      print('Error adding visitor to host: $e');
+      throw Exception('Failed to add visitor to host: $e');
     }
   }
 }
