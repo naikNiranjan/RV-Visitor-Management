@@ -119,7 +119,7 @@ class FirebaseService {
   Future<void> saveVisitorData(
     Visitor visitor, {
     File? photoFile,
-    File? documentFile,
+    File? documentFile, 
     bool skipRegistrationCheck = false,
   }) async {
     try {
@@ -394,7 +394,7 @@ class FirebaseService {
             : {}),
       };
 
-      await addVisitorToHost(visitor.whomToMeet, hostVisitorData);
+      await addVisitorToHost(visitor.whomToMeet, hostVisitorData, visitor);
 
       print('Visitor data saved successfully with ID: $visitorId');
     } catch (e) {
@@ -537,7 +537,7 @@ class FirebaseService {
         'status': 'checked_in',
       };
 
-      await addVisitorToHost(visitor.whomToMeet, hostVisitorData);
+      await addVisitorToHost(visitor.whomToMeet, hostVisitorData, visitor);
 
       print('Quick check-in saved successfully with ID: $visitId');
     } catch (e) {
@@ -713,12 +713,18 @@ class FirebaseService {
   }
 
   Future<void> addVisitorToHost(
-      String hostEmail, Map<String, dynamic> visitorData) async {
+      String hostEmail, Map<String, dynamic> visitorData, Visitor visitor) async {
     try {
       final hostRef = _firestore.collection('hosts').doc(hostEmail);
-      final visitorHistoryRef =
-          hostRef.collection('visitor_history').doc(visitorData['visitId']);
 
+      // Create references for pending approvals and visitor history
+      final pendingApprovalRef =
+          hostRef.collection('pending_approvals').doc(visitorData['visitId']);
+      final visitorHistoryRef =
+          hostRef.collection('visit_history').doc(visitorData['visitId']);
+      final notificationHistoryRef =
+          hostRef.collection('visit_history').doc(visitorData['visitId']);
+      
       await _firestore.runTransaction((transaction) async {
         final hostDoc = await transaction.get(hostRef);
 
@@ -726,7 +732,7 @@ class FirebaseService {
         final visitorHistorySnapshot = await _firestore
             .collection('hosts')
             .doc(hostEmail)
-            .collection('visitor_history')
+            .collection('visit_history')
             .count()
             .get();
 
@@ -750,6 +756,26 @@ class FirebaseService {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
+        // Create pending approval entry
+        transaction.set(pendingApprovalRef, {
+          'visitId': visitorData['visitId'],
+          'visitorId': visitorData['visitorId'],
+          'visitTime': FieldValue.serverTimestamp(),
+          'status': visitorData['status'],
+          'type': visitorData['type'],
+          'createdAt': FieldValue.serverTimestamp(),
+          'sendNotification': visitor.sendNotification, // Directly using visitor.sendNotification
+        });
+
+        transaction.set(notificationHistoryRef, {
+          'visitId': visitorData['visitId'],
+          'visitorId': visitorData['visitorId'],
+          'visitTime': FieldValue.serverTimestamp(),
+          'status': visitorData['status'],
+          'type': visitorData['type'],
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
         // Update host stats with accurate count
         transaction.update(hostRef, {
           'numberOfVisitors': (currentCount ?? 0) + 1,
@@ -759,7 +785,7 @@ class FirebaseService {
         });
       });
 
-      print('Visitor history added to host collection successfully');
+      print('Visitor history and pending approval added successfully');
     } catch (e) {
       print('Error adding visitor to host: $e');
       throw Exception('Failed to add visitor to host: $e');

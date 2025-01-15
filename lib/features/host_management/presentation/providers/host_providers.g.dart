@@ -58,7 +58,7 @@ final approvedVisitorsCountProvider = AutoDisposeStreamProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ApprovedVisitorsCountRef = AutoDisposeStreamProviderRef<int>;
-String _$visitHistoryCountHash() => r'2ae0d440ea66ad0167683f4aac0fcb64a3243497';
+String _$visitHistoryCountHash() => r'0437afc6e97f63f4d1290fd44e729bfb64298c7c';
 
 /// See also [visitHistoryCount].
 @ProviderFor(visitHistoryCount)
