@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class NavigationUtils {
   static void navigateToHome(BuildContext context) {
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    context.go('/host');
   }
 
   static void navigateToScreen(BuildContext context, Widget screen) {

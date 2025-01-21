@@ -99,7 +99,6 @@ class VisitHistoryScreen extends HookConsumerWidget {
         side: BorderSide(color: Colors.grey[200]!),
       ),
       child: InkWell(
-        onTap: () => _showVisitDetails(context, visit),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -232,71 +231,6 @@ class VisitHistoryScreen extends HookConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  void _showVisitDetails(BuildContext context, Map<String, dynamic> visit) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(visit['name'] as String? ?? 'Visit Details'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDetailRow('Contact', visit['contactNumber']),
-              _buildDetailRow('Email', visit['email']),
-              _buildDetailRow('Purpose', visit['purposeOfVisit']),
-              _buildDetailRow('Department', visit['department']),
-              _buildDetailRow('Visit Type', visit['type']),
-              _buildDetailRow('Status', visit['status']),
-              if (visit['vehicleNumber'] != null)
-                _buildDetailRow('Vehicle', visit['vehicleNumber']),
-              if (visit['type'] == 'cab') ...[
-                _buildDetailRow('Cab Provider', visit['cabProvider']),
-                _buildDetailRow('Driver Name', visit['driverName']),
-                _buildDetailRow('Driver Contact', visit['driverContact']),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, dynamic value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value?.toString() ?? 'N/A',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

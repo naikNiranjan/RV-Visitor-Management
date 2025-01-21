@@ -101,26 +101,6 @@ class HostService {
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 
-  Stream<List<Map<String, dynamic>>> getPendingApprovals(String email) {
-    return _firestore
-        .collection('hosts')
-        .doc(email)
-        .collection('pending_approvals')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
-  }
-
-  Stream<List<Map<String, dynamic>>> getVisitHistory(String email) {
-    return _firestore
-        .collection('hosts')
-        .doc(email)
-        .collection('visit_history')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
-  }
-
   Stream<int> getPendingApprovalsCount(String email) {
     return _firestore
         .collection('hosts')
@@ -146,6 +126,41 @@ class HostService {
         .collection('visitor_history')
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
+  }
+
+  Stream<List<Map<String, dynamic>>> getPendingApprovals(String email) {
+    return _firestore
+        .collection('hosts')
+        .doc(email)
+        .collection('pending_approvals')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            ...data,
+            'id': doc.id,
+            'createdAt': data['createdAt']?.toDate(),
+          };
+        }).toList());
+  }
+
+  Stream<List<Map<String, dynamic>>> getVisitHistory(String email) {
+    return _firestore
+        .collection('hosts')
+        .doc(email)
+        .collection('visitor_history')
+        .orderBy('visitTime', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            ...data,
+            'id': doc.id,
+            'visitTime': data['visitTime']?.toDate(),
+            'createdAt': data['createdAt']?.toDate(),
+          };
+        }).toList());
   }
 
   Future<void> approveVisitor(Visitor visitor) async {
@@ -235,38 +250,14 @@ class HostService {
         .collection('visitor_history')
         .orderBy('visitTime', descending: true)
         .snapshots()
-        .asyncMap((snapshot) async {
-      print('Fetching ${snapshot.docs.length} visitor history records');
-      List<Map<String, dynamic>> visits = [];
-
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        // Fetch complete visitor data from visitors collection
-        final visitorDoc = await _firestore
-            .collection('visitors')
-            .doc(data['visitorId'])
-            .get();
-
-        final visitData = {
-          ...data,
-          ...visitorDoc.data() ?? {},
-          'id': doc.id,
-          'visitId': data['visitId'],
-          'visitTime': data['visitTime']?.toDate(),
-          'createdAt': data['createdAt']?.toDate(),
-        };
-
-        // Also fetch visit-specific data from visits collection
-        final visitDoc =
-            await _firestore.collection('visits').doc(data['visitId']).get();
-
-        if (visitDoc.exists) {
-          visitData.addAll(visitDoc.data() ?? {});
-        }
-
-        visits.add(visitData);
-      }
-      return visits;
-    });
+        .map((snapshot) => snapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            ...data,
+            'id': doc.id,
+            'visitTime': data['visitTime']?.toDate(),
+            'createdAt': data['createdAt']?.toDate(),
+          };
+        }).toList());
   }
 }

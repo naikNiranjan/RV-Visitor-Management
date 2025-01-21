@@ -46,7 +46,7 @@ class _CabRegistrationFormState extends ConsumerState<CabRegistrationForm> {
   final List<String> _cabProviders = [
     'Uber',
     'Ola',
-    'Meru',
+    'Auto',
     'Other',
   ];
 

@@ -91,14 +91,6 @@ class AppDrawer extends ConsumerWidget {
                   title: 'Schedule Meeting',
                   onTap: () => context.go('/host/schedule-meeting'),
                 ),
-                const Divider(height: 1),
-                _buildDrawerItem(
-                  context: context,
-                  icon: Icons.logout,
-                  title: 'Logout',
-                  onTap: () => ref.read(authProvider.notifier).signOut(),
-                  isDestructive: true,
-                ),
               ],
             ),
           ),
@@ -152,4 +144,4 @@ class AppDrawer extends ConsumerWidget {
       ),
     );
   }
-} 
+}

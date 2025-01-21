@@ -42,4 +42,8 @@ Map<String, dynamic> _$$HostImplToJson(_$HostImpl instance) =>
       'numberOfVisitors': instance.numberOfVisitors,
       'notificationSettings': instance.notificationSettings,
       'securityLevel': instance.securityLevel,
+      'id': instance.id,
+      'createdAt': instance.createdAt?.toIso8601String(),
+      'updatedAt': instance.updatedAt?.toIso8601String(),
+      'lastLogin': instance.lastLogin?.toIso8601String(),
     };
