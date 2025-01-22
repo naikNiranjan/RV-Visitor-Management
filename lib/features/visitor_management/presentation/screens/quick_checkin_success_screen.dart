@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/models/visitor.dart';
+import '../../../../core/utils/navigation_utils.dart';
 
 class QuickCheckInSuccessScreen extends StatefulWidget {
   final Visitor visitor;
@@ -99,12 +100,7 @@ class _QuickCheckInSuccessScreenState extends State<QuickCheckInSuccessScreen>
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/',
-                      (route) => false,
-                    );
-                  },
+                  onPressed: () => NavigationUtils.navigateToHome(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     shape: RoundedRectangleBorder(

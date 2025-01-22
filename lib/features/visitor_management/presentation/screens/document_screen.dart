@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_app_bar.dart';
-import '../widgets/animated_list_item.dart';
+import 'package:go_router/go_router.dart';
 
 class DocumentScreen extends StatelessWidget {
   const DocumentScreen({super.key});
@@ -8,21 +7,15 @@ class DocumentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 10, // Replace with actual data count
-        itemBuilder: (context, index) {
-          return AnimatedListItem(
-            index: index,
-            title: 'Document ${index + 1}',
-            subtitle: 'ID Card',
-            leadingIcon: Icons.description_outlined,
-            onTap: () {
-              // Handle tap
-            },
-          );
-        },
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text('Documents'),
+      ),
+      body: const Center(
+        child: Text('Document Screen'),
       ),
       floatingActionButton: _buildFloatingActionButton(),
     );

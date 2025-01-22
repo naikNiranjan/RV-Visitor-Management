@@ -3,7 +3,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:rvvm/core/theme/app_colors.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/services/google_auth_service.dart';
 import '../widgets/success_animation.dart';
@@ -11,7 +10,6 @@ import '../../../../core/utils/validation_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/password_field.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 
 class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
@@ -28,6 +26,8 @@ class LoginScreen extends HookConsumerWidget {
         return 'This account has been disabled';
       case 'too-many-requests':
         return 'Too many failed attempts. Please try again later';
+      case 'invalid-role':
+        return 'This account is not authorized for the selected login type';
       default:
         return 'Authentication failed: ${e.message}';
     }
@@ -41,7 +41,7 @@ class LoginScreen extends HookConsumerWidget {
     final errorMessage = useState<String?>(null);
     final isSecurityLogin = useState(false);
     final isPasswordVisible = useState(false);
-    
+
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final emailError = useState<String?>(null);
     final passwordError = useState<String?>(null);
@@ -75,9 +75,10 @@ class LoginScreen extends HookConsumerWidget {
       try {
         isLoading.value = true;
         errorMessage.value = null;
+        final email = emailController.text.trim();
 
         // Validate email domain first
-        final emailError = ValidationUtils.validateEmail(emailController.text);
+        final emailError = ValidationUtils.validateEmail(email);
         if (emailError != null) {
           throw FirebaseAuthException(
             code: 'invalid-email',
@@ -85,61 +86,37 @@ class LoginScreen extends HookConsumerWidget {
           );
         }
 
-        // Check if trying to login as security with non-security account or vice versa
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .where('email', isEqualTo: emailController.text.trim())
-            .get();
-
-        if (userDoc.docs.isNotEmpty) {
-          final userData = userDoc.docs.first.data();
-          if (isSecurityLogin.value && userData['role'] != 'security') {
-            throw 'This account is not authorized for security login';
-          }
-          if (!isSecurityLogin.value && userData['role'] == 'security') {
-            throw 'Security personnel must use security login';
-          }
-        } else {
-          throw 'No user found with this email';
-        }
-
+        // Simple authentication based on login screen type
         await ref.read(authProvider.notifier).signInWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text,
-          role: isSecurityLogin.value ? 'security' : 'host',
-        );
+              email: email,
+              password: passwordController.text,
+              role: isSecurityLogin.value ? 'Security' : 'Host',
+            );
 
         if (context.mounted) {
-          context.go(isSecurityLogin.value ? '/register' : '/host');
+          // Navigate based on which login screen we're on
+          if (isSecurityLogin.value) {
+            // If logging in through security screen, always go to main screen
+            context.go('/register');
+          } else {
+            // If logging in through host screen, always go to host dashboard
+            context.go('/host');
+          }
         }
       } on FirebaseAuthException catch (e) {
         errorMessage.value = _handleAuthException(e);
-        
-        // Clear password field on wrong password
-        if (e.code == 'wrong-password') {
-          passwordController.clear();
-          passwordError.value = null;
-        }
       } catch (e) {
         errorMessage.value = e.toString();
-        // Clear password on any error for security
-        passwordController.clear();
-        passwordError.value = null;
       } finally {
         isLoading.value = false;
       }
     }
 
     Future<void> handleGoogleSignIn() async {
-      if (isSecurityLogin.value) {
-        errorMessage.value = 'Security personnel cannot use Google Sign-In';
-        return;
-      }
-
       try {
         isLoading.value = true;
         errorMessage.value = null;
-        
+
         // Validate email domain for Google Sign-In
         final googleUser = await GoogleSignIn().signIn();
         if (googleUser == null) {
@@ -148,11 +125,11 @@ class LoginScreen extends HookConsumerWidget {
         if (!googleUser.email.endsWith('@rvce.edu.in')) {
           throw 'Only RVCE email addresses (@rvce.edu.in) are allowed';
         }
-        
+
         final userCredential = await ref
             .read(googleAuthServiceProvider.notifier)
-            .signInWithGoogle(role: 'host');
-        
+            .signInWithGoogle(role: 'Host');
+
         if (context.mounted) {
           Navigator.of(context).push(
             PageRouteBuilder(
@@ -206,9 +183,7 @@ class LoginScreen extends HookConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        isSecurityLogin.value 
-                            ? 'Security Login' 
-                            : 'Host Login',
+                        isSecurityLogin.value ? 'Security Login' : 'Host Login',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 16,
@@ -245,17 +220,24 @@ class LoginScreen extends HookConsumerWidget {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.1),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .errorContainer
+                                        .withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: Theme.of(context).colorScheme.error.withOpacity(0.3),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .error
+                                          .withOpacity(0.3),
                                     ),
                                   ),
                                   child: Row(
                                     children: [
                                       Icon(
                                         Icons.error_outline,
-                                        color: Theme.of(context).colorScheme.error,
+                                        color:
+                                            Theme.of(context).colorScheme.error,
                                         size: 20,
                                       ),
                                       const SizedBox(width: 8),
@@ -263,7 +245,9 @@ class LoginScreen extends HookConsumerWidget {
                                         child: SelectableText(
                                           errorMessage.value!,
                                           style: TextStyle(
-                                            color: Theme.of(context).colorScheme.error,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .error,
                                             fontSize: 14,
                                           ),
                                         ),
@@ -283,13 +267,15 @@ class LoginScreen extends HookConsumerWidget {
                                         labelText: 'Email',
                                         prefixIcon: const Icon(Icons.email),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
                                         errorText: emailError.value,
                                       ),
                                       keyboardType: TextInputType.emailAddress,
                                       textInputAction: TextInputAction.next,
-                                      onChanged: (_) => emailError.value = ValidationUtils.validateEmail(
+                                      onChanged: (_) => emailError.value =
+                                          ValidationUtils.validateEmail(
                                         emailController.text,
                                       ),
                                     ),
@@ -298,17 +284,21 @@ class LoginScreen extends HookConsumerWidget {
                                       controller: passwordController,
                                       labelText: 'Password',
                                       errorText: passwordError.value,
-                                      onChanged: (_) => passwordError.value = 
-                                        ValidationUtils.validateLoginPassword(passwordController.text),
+                                      onChanged: (_) => passwordError.value =
+                                          ValidationUtils.validateLoginPassword(
+                                              passwordController.text),
                                       onFieldSubmitted: (_) => handleLogin(),
                                     ),
                                     const SizedBox(height: 24),
                                     FilledButton(
-                                      onPressed: isLoading.value ? null : handleLogin,
+                                      onPressed:
+                                          isLoading.value ? null : handleLogin,
                                       style: FilledButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
                                       ),
                                       child: isLoading.value
@@ -321,14 +311,15 @@ class LoginScreen extends HookConsumerWidget {
                                               ),
                                             )
                                           : Row(
-                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
                                               children: [
-                                                Icon(isSecurityLogin.value 
-                                                    ? Icons.security 
+                                                Icon(isSecurityLogin.value
+                                                    ? Icons.security
                                                     : Icons.login),
                                                 const SizedBox(width: 8),
-                                                Text(isSecurityLogin.value 
-                                                    ? 'SECURITY LOGIN' 
+                                                Text(isSecurityLogin.value
+                                                    ? 'SECURITY LOGIN'
                                                     : 'HOST LOGIN'),
                                               ],
                                             ),
@@ -339,7 +330,8 @@ class LoginScreen extends HookConsumerWidget {
                                         children: [
                                           Expanded(child: Divider()),
                                           Padding(
-                                            padding: EdgeInsets.symmetric(horizontal: 16),
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 16),
                                             child: Text('OR'),
                                           ),
                                           Expanded(child: Divider()),
@@ -347,20 +339,22 @@ class LoginScreen extends HookConsumerWidget {
                                       ),
                                       const SizedBox(height: 24),
                                       OutlinedButton(
-                                        onPressed: isLoading.value 
-                                            ? null 
+                                        onPressed: isLoading.value
+                                            ? null
                                             : handleGoogleSignIn,
                                         style: OutlinedButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(
                                             vertical: 16,
                                           ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           backgroundColor: Colors.white,
                                         ),
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Image.asset(
                                               'assets/images/google_logo.png',
@@ -371,17 +365,18 @@ class LoginScreen extends HookConsumerWidget {
                                           ],
                                         ),
                                       ),
-                                      if (!isSecurityLogin.value) 
+                                      if (!isSecurityLogin.value)
                                         TextButton(
-                                          onPressed: () => context.push('/signup'),
+                                          onPressed: () =>
+                                              context.push('/signup'),
                                           child: const Text(
-                                            "Don't have an account? Sign Up"
-                                          ),
+                                              "Don't have an account? Sign Up"),
                                         ),
                                     ],
                                     TextButton(
                                       onPressed: () {
-                                        isSecurityLogin.value = !isSecurityLogin.value;
+                                        isSecurityLogin.value =
+                                            !isSecurityLogin.value;
                                         emailController.clear();
                                         passwordController.clear();
                                         errorMessage.value = null;
@@ -409,4 +404,4 @@ class LoginScreen extends HookConsumerWidget {
       ),
     );
   }
-} 
+}

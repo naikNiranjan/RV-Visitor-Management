@@ -6,7 +6,7 @@ part of 'google_auth_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$googleAuthServiceHash() => r'712d9982ba6ed33c2a944c2846c48fcb65f430fd';
+String _$googleAuthServiceHash() => r'422a9e49e748c2b9e400a2e5e177ed5a6f2888d5';
 
 /// See also [GoogleAuthService].
 @ProviderFor(GoogleAuthService)
